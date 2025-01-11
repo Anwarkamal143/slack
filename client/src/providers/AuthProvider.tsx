@@ -1,22 +1,21 @@
 "use client";
 import { getAuthUser } from "@/api/auth";
 import useUserStore from "@/store/userStore";
-import { ReactNode, Suspense, useLayoutEffect, useState } from "react";
+import { ReactNode, Suspense, useEffect, useState } from "react";
 import PageLoader from "../components/loader";
 import SocketContextProvider from "./SocketProvider";
 type Props = {
   children: ReactNode;
 };
 
-const AuthProvider = (props: Props) => {
+export default function AuthProvider(props: Props) {
   const { children } = props;
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOnServer, setIsLoadingOnServer] = useState(true);
-  const isServer = typeof window == undefined;
+  const [isLoading, setIsLoading] = useState(true);
+  const [isServer, setIsServer] = useState(true);
+
   const setUser = useUserStore((state) => state.setUser);
 
   const onGetUser = async () => {
-    if (isServer) return;
     try {
       setIsLoading(true);
       const data = await getAuthUser();
@@ -33,27 +32,25 @@ const AuthProvider = (props: Props) => {
     } catch (error) {
     } finally {
       setIsLoading(false);
-      setIsLoadingOnServer(false);
     }
   };
-  useLayoutEffect(() => {
+  useEffect(() => {
+    setIsServer(false);
     onGetUser();
 
     return () => {};
-  }, [isServer]);
+  }, []);
 
+  if (isServer) {
+    return null;
+  }
   if (isLoading) {
     return <PageLoader />;
   }
 
   return (
     <SocketContextProvider>
-      <Suspense key={Date.now()} fallback={<PageLoader />}>
-        {isLoadingOnServer ? <PageLoader /> : null}
-        {children}
-      </Suspense>
+      <Suspense fallback={<PageLoader />}>{children}</Suspense>
     </SocketContextProvider>
   );
-};
-
-export default AuthProvider;
+}
