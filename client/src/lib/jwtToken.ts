@@ -1,42 +1,11 @@
 import { JWT_COOKIE_EXPIRES_IN, JWT_EXPIRES_IN, JWT_SECRET } from "@/config";
-import jwt from "jsonwebtoken";
-import { promisify } from "util";
+import * as jose from "jose";
 
 type IJwtTokenData = {
   id: string;
   expiresIn?: string;
   [key: string]: any;
 };
-export function jwtSignToken(props: IJwtTokenData) {
-  const { id, expiresIn = JWT_EXPIRES_IN, ...rest } = props;
-  console.log({ expiresIn });
-  return jwt.sign({ id, ...rest }, JWT_SECRET, {
-    expiresIn: expiresIn,
-    // expiresIn: "10s",
-  });
-}
-type IPayload = {
-  id: string;
-  provider: string;
-  providerType: string;
-  [key: string]: any;
-};
-export async function verifyJwt(token: string | null | undefined) {
-  if (!token) {
-    return null;
-  }
-  try {
-    const token_data = await promisify(jwt.verify as any)(token, JWT_SECRET);
-    const { iat, exp, ...rest } = token_data;
-    return { token_data, data: rest };
-  } catch (error: any) {
-    // const message = error.message;
-    // if (message && message.toLowerCase().indexOf("jwt expired") != -1) {
-    //   return JWT_MESSAGES.jwt_expired;
-    // }
-    return null;
-  }
-}
 export const getCookiesOptions = (cookies: Record<string, any> = {}) => {
   const updatedCookies = { ...cookies };
   updatedCookies.expires =
@@ -52,10 +21,48 @@ export const getCookiesOptions = (cookies: Record<string, any> = {}) => {
 
   return updatedCookies;
 };
-export const createToken = (tokenData: { id: string; [key: string]: any }) => {
-  const token = jwtSignToken({ ...tokenData, expiresIn: "2m" });
+export async function verifyJwt(token: string | null | undefined) {
+  if (!token) {
+    return null;
+  }
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET); // Get secret as Uint8Array
+
+    const token_data = await jose.jwtVerify(token, secret);
+    const { payload } = token_data;
+    const { iat, exp, ...rest } = payload;
+    return { token_data: payload, data: rest as IServerCookieType };
+  } catch (error: any) {
+    console.log({ error });
+    // const message = error.message;
+    // if (message && message.toLowerCase().indexOf("jwt expired") != -1) {
+    //   return JWT_MESSAGES.jwt_expired;
+    // }
+    return null;
+  }
+}
+export async function jwtSignToken(props: IJwtTokenData) {
+  const { expiresIn = JWT_EXPIRES_IN, ...rest } = props;
+  const secret = new TextEncoder().encode(JWT_SECRET);
+  return await new jose.SignJWT({ ...rest })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secret);
+}
+type IPayload = {
+  id: string;
+  provider: string;
+  providerType: string;
+  [key: string]: any;
+};
+export const createToken = async (tokenData: {
+  id: string;
+  [key: string]: any;
+}) => {
+  const token = await jwtSignToken({ ...tokenData, expiresIn: "1m" });
   const cookieOptions: ICookieOptions = getCookiesOptions();
-  const refreshToken = jwtSignToken({ ...tokenData });
+  const refreshToken = await jwtSignToken({ ...tokenData, expiresIn: "90d" });
   return {
     token,
     refresh_attributes: cookieOptions,

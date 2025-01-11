@@ -13,7 +13,11 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 const app = express();
-
+// Catch uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1); // Restart process in a real app
+});
 app.use(
   cors({
     credentials: true,
@@ -45,4 +49,9 @@ app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 app.use(errorHandler);
+
+// Catch unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
 export default app;

@@ -5,25 +5,26 @@ import {
   getUserById,
 } from "@/data-access/users";
 import { AccountType, ProviderType } from "@/db/schema";
-import { IGoogleUser } from "@/types/ISocial";
 import { setCookies } from "@/utils";
 import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
-import { getCodeVerifierandState, googleAuth } from "@/utils/socialauth";
-import { Response } from "express";
+import { getArcticeMethods, googleAuth } from "@/utils/socialauth";
+import { OAuth2Tokens } from "arctic";
+import { CookieOptions, Response } from "express";
 const googleCookies = {
   google_oauth_state: "google_oauth_state",
   google_code_verifier: "google_code_verifier",
 };
-const Googlge_Cookies_options = {
-  secure: true,
+const Googlge_Cookies_options: CookieOptions = {
+  // secure: true,
   path: "/",
   httpOnly: true,
-  maxAge: 600 * 100,
+  maxAge: 600 * 1000,
+  secure: process.env.NODE_ENV === "production",
 };
 export const googleSignAuth = catchAsync(async (req, res, next) => {
   try {
-    const gCS = await getCodeVerifierandState();
+    const gCS = await getArcticeMethods();
     const state = gCS.generateState();
     const codeVerifier = gCS.generateCodeVerifier();
     const gAuth = await googleAuth();
@@ -38,20 +39,14 @@ export const googleSignAuth = catchAsync(async (req, res, next) => {
       codeVerifier,
       Googlge_Cookies_options
     );
-    const generatedURL = await gAuth.createAuthorizationURL(
-      state,
-      codeVerifier,
-      {
-        scopes: ["profile", "email"],
-      }
-    );
+    const generatedURL = gAuth.createAuthorizationURL(state, codeVerifier, [
+      "profile",
+      "email",
+    ]);
 
     // const url = new URL(generatedURL);
-
     return res.status(200).json(generatedURL);
   } catch (error) {
-    console.log({ error });
-
     return next(new AppError("Something went wrong", 500));
   }
 });
@@ -62,7 +57,6 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
   const state = url.searchParams.get("state");
   const storedState = req.cookies[googleCookies.google_oauth_state] ?? null;
   const codeVerifier = req.cookies[googleCookies.google_code_verifier] ?? null;
-
   if (
     !code ||
     !state ||
@@ -75,20 +69,25 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
 
   try {
     const gAuth = await googleAuth();
-    console.log({ state });
-    await gAuth.createAuthorizationURL(state, codeVerifier, {
-      scopes: ["profile", "email"],
-    });
-    const tokens = await gAuth.validateAuthorizationCode(code, codeVerifier);
-    const response = await fetch(
-      "https://openidconnect.googleapis.com/v1/userinfo",
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`,
-        },
-      }
+    gAuth.createAuthorizationURL(state, codeVerifier, ["profile", "email"]);
+    const tokens: OAuth2Tokens = await gAuth.validateAuthorizationCode(
+      code,
+      codeVerifier
     );
-    const googleUser = (await response.json()) as IGoogleUser;
+    const { decodeIdToken } = await getArcticeMethods();
+    // const accessToken: any = tokens.accessToken();
+
+    // const response = await fetch(
+    //   "https://openidconnect.googleapis.com/v1/userinfo",
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${accessToken}`,
+    //     },
+    //   }
+    // );
+    // const googleUser = (await response.json()) as IGoogleUser;
+    const googleUser = decodeIdToken(tokens.idToken());
+    console.log({ tokens, googleUser });
     const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
     if (existingAccount) {
       const user = await getUserById(existingAccount.userId);
@@ -112,7 +111,7 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
 
     return res.status(302).redirect(AFTER_LOGIN_URL);
   } catch (e: any) {
-    next(new AppError("Error on callback", 400));
+    next(new AppError("Error on callback" + e, 400));
   }
 });
 const setCallbackCookie = (

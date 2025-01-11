@@ -31,13 +31,25 @@ export function enumToPgEnum<T extends Record<string, any>>(
 const pgTable = pgTableCreator((name) => `${name}`);
 export const roleEnum = pgEnum("role", enumToPgEnum(Role));
 export const accountTypeEnum = pgEnum("type", enumToPgEnum(AccountType));
+
+const updatedAt = timestamp("updated_at", { withTimezone: true })
+  .defaultNow()
+  .$onUpdate(() => new Date())
+  .notNull();
+const createdAt = timestamp("created_at", { withTimezone: true })
+  .defaultNow()
+  .notNull();
 export const user = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
   // name: text("name"),
   password: text("password"),
   email: text("email").notNull().unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  emailVerified: timestamp("emailVerified", {
+    mode: "date",
+  }),
   role: roleEnum("role").default(Role.USER),
+  createdAt,
+  updatedAt,
 });
 
 export const accounts = pgTable("accounts", {
@@ -56,6 +68,8 @@ export const accounts = pgTable("accounts", {
   access_token: text("access_token"),
   expires_at: integer("expires_at"),
   token_type: text("token_type"),
+  createdAt,
+  updatedAt,
 });
 
 export const reset_tokens = pgTable("reset_tokens", {
@@ -66,6 +80,8 @@ export const reset_tokens = pgTable("reset_tokens", {
     .notNull(),
   token: text("token"),
   tokenExpiresAt: integer("token_expires_at").notNull(),
+  createdAt,
+  updatedAt,
 });
 
 export const verify_email_tokens = pgTable("verify_email_tokens", {
@@ -88,6 +104,8 @@ export const profile = pgTable("profile", {
   imageId: text("image_id"),
   image: text("image"),
   bio: text("bio").notNull().default(""),
+  createdAt,
+  updatedAt,
 });
 
 export type User = typeof user.$inferSelect;

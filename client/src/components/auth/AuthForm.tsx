@@ -1,13 +1,13 @@
-import React, { ReactNode } from "react";
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 type Props = {
   title?: ReactNode;
@@ -21,7 +21,7 @@ const AuthForm = (props: Props) => {
   const { title, description, children, className, footer } = props;
   const isHeaderExist = !!title || !!description;
   return (
-    <Card className={cn("max-w-2xl w-full", className)}>
+    <Card className={cn("max-w-2xl w-full ", className)}>
       {isHeaderExist ? (
         <CardHeader>
           {title ? <CardTitle>{title}</CardTitle> : null}

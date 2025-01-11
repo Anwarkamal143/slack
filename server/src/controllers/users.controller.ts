@@ -11,6 +11,9 @@ export const getUsers = catchAsync(async (req, res, next) => {
 });
 export const getUserAccountAndProfile = catchAsync(async (req, res, next) => {
   const reqUser = req.user;
+  if (!reqUser) {
+    return res.status(200).json(null);
+  }
   try {
     const user = await getUser_Profile_Account_ById(reqUser.id);
     if (user.error) {

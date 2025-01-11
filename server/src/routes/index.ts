@@ -5,7 +5,7 @@ import usersRoutes from "./users.routes";
 
 const router = express.Router();
 
-router.use("/users", usersRoutes);
 router.use("/auth", authRoutes);
 router.use("/google", googleRoutes);
+router.use("/users", usersRoutes);
 export default router;
