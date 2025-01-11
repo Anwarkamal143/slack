@@ -7,23 +7,18 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const signOut = async (): Promise<boolean | null> => {
-  cookies().delete(COOKIE_NAME);
-  cookies().delete(REFRESH_COOKIE_NAME);
+  (await cookies()).delete(COOKIE_NAME);
+  (await cookies()).delete(REFRESH_COOKIE_NAME);
   return redirect("/login");
 };
 
-export const getUserOrRedirect = async () => {
-  const user = {};
-  if (!user) {
-    return redirect("/login");
-  }
-
-  return user;
-};
-
-export const getServerUser = async (): Promise<null | IServerCookieType> => {
-  const token = cookies().get(COOKIE_NAME)?.value;
-  const refreshToken = cookies().get(REFRESH_COOKIE_NAME)?.value;
+export const getCookieUser = async (
+  requestCookies: any = null
+): Promise<null | IServerCookieType> => {
+  const rCookies = requestCookies || cookies;
+  const token = (await rCookies()).get(COOKIE_NAME)?.value;
+  const refreshToken = (await rCookies()).get(REFRESH_COOKIE_NAME)?.value;
+  console.log({ token, refreshToken });
   return new Promise(async (res, rej) => {
     if (!token && !refreshToken) {
       return res(null);
@@ -40,9 +35,18 @@ export const getServerUser = async (): Promise<null | IServerCookieType> => {
         refresh_attributes,
         refreshToken: refToken,
         token,
-      } = createToken(data);
-      cookies().set(COOKIE_NAME, token, token_attributes);
-      cookies().set(REFRESH_COOKIE_NAME, refToken, refresh_attributes);
+      } = await createToken(data);
+      console.log({ data });
+      try {
+        (await rCookies()).set(COOKIE_NAME, token, token_attributes);
+        (await rCookies()).set(
+          REFRESH_COOKIE_NAME,
+          refToken,
+          refresh_attributes
+        );
+      } catch (error) {
+        console.log(error, "Error on setting");
+      }
     }
     const { data } = tokenData;
     return res(data);

@@ -69,7 +69,7 @@ export function jwtSignToken(props: IJwtTokenData) {
 // };
 
 export const createToken = (tokenData: { id: string; [key: string]: any }) => {
-  const token = jwtSignToken({ ...tokenData, expiresIn: "2m" });
+  const token = jwtSignToken({ ...tokenData, expiresIn: "1m" });
   const cookieOptions: CookieOptions = getCookiesOptions();
   const refreshToken = jwtSignToken({ ...tokenData });
   return {
@@ -152,4 +152,11 @@ export const setCookies = (
     createToken(tokenData);
   res.cookie(COOKIE_NAME, token, token_attributes);
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refresh_attributes);
+};
+export const resetCookies = (res: Response) => {
+  res.cookie(COOKIE_NAME, "", { ...getCookiesOptions(), maxAge: 0 });
+  res.cookie(REFRESH_COOKIE_NAME, "", {
+    ...getCookiesOptions(),
+    maxAge: 0,
+  });
 };

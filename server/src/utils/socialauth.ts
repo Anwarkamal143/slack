@@ -17,3 +17,11 @@ export const getCodeVerifierandState = async () => {
 
   return { generateCodeVerifier, generateState };
 };
+
+export const getArcticeMethods = async () => {
+  const { generateCodeVerifier, generateState, decodeIdToken } = await eval(
+    'import("arctic")'
+  );
+
+  return { generateCodeVerifier, generateState, decodeIdToken };
+};

@@ -19,6 +19,7 @@ export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 export const HOST_NAME = process.env.HOST_NAME || "";
 
 export const AFTER_LOGIN_URL = process.env.DOMAIN_URL || "";
+
 export const getCookiesOptions = (cookies: CookieOptions = {}) => {
   const updatedCookies = { ...cookies };
   updatedCookies.expires =

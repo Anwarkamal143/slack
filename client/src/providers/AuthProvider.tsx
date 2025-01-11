@@ -8,14 +8,14 @@ type Props = {
   children: ReactNode;
 };
 
-const AuthProvider = (props: Props) => {
+export default function AuthProvider(props: Props) {
   const { children } = props;
-  const [isLoading, setIsLoading] = useState(false);
-  const isServer = typeof window == undefined;
+  const [isLoading, setIsLoading] = useState(true);
+  const [isServer, setIsServer] = useState(true);
+
   const setUser = useUserStore((state) => state.setUser);
 
   const onGetUser = async () => {
-    if (isServer) return;
     try {
       setIsLoading(true);
       const data = await getAuthUser();
@@ -35,22 +35,22 @@ const AuthProvider = (props: Props) => {
     }
   };
   useEffect(() => {
+    setIsServer(false);
     onGetUser();
 
     return () => {};
-  }, [isServer]);
+  }, []);
 
+  if (isServer) {
+    return null;
+  }
   if (isLoading) {
     return <PageLoader />;
   }
 
   return (
     <SocketContextProvider>
-      <Suspense key={Date.now()} fallback={<PageLoader />}>
-        {children}
-      </Suspense>
+      <Suspense fallback={<PageLoader />}>{children}</Suspense>
     </SocketContextProvider>
   );
-};
-
-export default AuthProvider;
+}

@@ -16,10 +16,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className="" suppressHydrationWarning={true}>
-        <AuthProvider>
-          {children}
-          <Toaster richColors />
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
+        <Toaster richColors />
       </body>
     </html>
   );

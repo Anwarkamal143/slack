@@ -6,6 +6,7 @@ import { createAccountViaGoogle } from "./accounts";
 import { createProfile } from "./profiles";
 
 import { getAccountByProviderId } from "@/data-access/accounts";
+import { toUTC } from "@/utils/dateUtils";
 
 export async function createUser(
   data: { email: string } & Partial<Omit<IUser, "email">>
@@ -22,7 +23,10 @@ export async function createGoogleUserUseCase(googleUser: IGoogleUser) {
   let existingUser = await getUserByEmail(googleUser.email);
 
   if (!existingUser?.user) {
-    existingUser.user = await createUser({ email: googleUser.email });
+    existingUser.user = await createUser({
+      email: googleUser.email,
+      emailVerified: toUTC(new Date(), false),
+    });
   }
   const user = existingUser.user;
   await createAccountViaGoogle(user.id, googleUser.sub);

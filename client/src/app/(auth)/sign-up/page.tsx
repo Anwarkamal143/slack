@@ -1,10 +1,11 @@
 "use client";
-import { signUp } from "@/api/auth";
+import { signInWithGoogle, signUp } from "@/api/auth";
+import Google from "@/assets/icons/GoogleIcon";
 import AuthForm from "@/components/auth/AuthForm";
 import Form from "@/components/forms/Form";
 import Input from "@/components/forms/Input";
+import SeparatorText from "@/components/SeparatorText";
 import { Button } from "@/components/ui/button";
-import useIsAuth from "@/hooks/useIsAuth";
 import useZodForm from "@/hooks/useZodForm";
 import { SIGN_UP_SCHEMA, SignUpSchemaType } from "@/schema/auth";
 import { IUser } from "@/schema/user";
@@ -17,7 +18,7 @@ type Props = {};
 
 const SignUpPage = (props: Props) => {
   const router = useRouter();
-  useIsAuth(true);
+  // useIsAuth(true);
   const form = useZodForm({
     schema: SIGN_UP_SCHEMA,
     defaultValues: {
@@ -29,7 +30,6 @@ const SignUpPage = (props: Props) => {
   });
   const setUser = useUserStore((state) => state.setUser);
   const onSubmit = async (e: SignUpSchemaType) => {
-    console.log("hello there", e);
     const result = await signUp(e);
 
     if (result.success) {
@@ -44,11 +44,20 @@ const SignUpPage = (props: Props) => {
     toast.error(result.message);
   };
 
+  const SignInWithG = async () => {
+    console.log("SignIn With Google");
+    try {
+      const result = await signInWithGoogle();
+      router.replace(result);
+    } catch (error) {}
+  };
+
   return (
     <div className="relative flex w-full  h-screen bg-background justify-center items-center">
       <AuthForm
         title="Begin your journey!"
         description="Create your account to continue."
+        className=""
         footer={
           <div className="w-full flex flex-col gap-2 items-center justify-center">
             <Button
@@ -57,6 +66,15 @@ const SignUpPage = (props: Props) => {
               onClick={form.handleSubmit(onSubmit)}
             >
               Sign up
+            </Button>
+            <SeparatorText text="OR" />
+            <Button
+              type="button"
+              variant={"outline"}
+              className=" w-full gap-2 text-gray-600"
+              onClick={SignInWithG}
+            >
+              <Google /> Continue with Google
             </Button>
             <div className="flex  gap-1 text-sm">
               <span className="text-gray-400">Alreay have an account?</span>
@@ -67,25 +85,28 @@ const SignUpPage = (props: Props) => {
           </div>
         }
       >
-        <Form form={form} onSubmit={onSubmit}>
-          <Input name="name" placeholder="Enter name" label="Name" />
+        <Form form={form} onSubmit={onSubmit} fieldSetclassName="space-y-5">
+          <Input name="name" placeholder="Enter name" label="Name" border="b" />
           <Input
             name="email"
             placeholder="Enter email..."
             type="email"
             label="Email"
+            border="b"
           />
           <Input
             name="password"
             placeholder="********"
             type="password"
             label="Password"
+            border="b"
           />
           <Input
             name="confirmPassword"
             placeholder="********"
             type="password"
             label="Confirm Password"
+            border="b"
           />
         </Form>
       </AuthForm>

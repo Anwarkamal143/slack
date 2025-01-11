@@ -47,12 +47,19 @@ type InputFormProps = InputProps & {
   helperText?: ReactNode;
   leftIcon?: IconProps;
   rightIcon?: IconProps;
+  border?: "b" | "t" | "l" | "r";
 };
 type GenericTextfieldProps<T extends FieldValues> = UseControllerProps<T> &
   InputFormProps;
 
 const ICON_COMMON_CLASSES = (extra: string) =>
-  "w-5 h-5 absolute top-[50%] translate-y-[-50%] pointer-events-none " + extra;
+  "h-[45%] absolute top-[50%] translate-y-[-50%] pointer-events-none " + extra;
+const borderClasses = {
+  b: "border-transparent rounded-none border-solid border outline-none  border-b border-b-input hover:border-b-gray-300 focus-visible:border-b-gray-400 focus:border-b-gray-400 !ring-0 !ring-offset-0",
+  t: "border-transparent rounded-none border-solid border outline-none  border-t border-t-input hover:border-t-gray-300 focus-visible:border-t-gray-400 focus:border-t-gray-400 !ring-0 !ring-offset-0",
+  r: "border-transparent rounded-none border-solid border outline-none  border-r border-r-input hover:border-r-gray-300 focus-visible:border-r-gray-400 focus:border-r-gray-400 !ring-0 !ring-offset-0",
+  l: "border-transparent rounded-none border-solid border outline-none  border-l border-l-input hover:border-l-gray-300 focus-visible:border-l-gray-400 focus:border-l-gray-400 !ring-0 !ring-offset-0",
+} as const;
 const FormInput = <T extends FieldValues>(
   props: GenericTextfieldProps<T>,
   ref: Ref<HTMLInputElement>
@@ -69,8 +76,10 @@ const FormInput = <T extends FieldValues>(
     placeholder,
     labelClass,
     type = "text",
+    border,
     ...rest
   } = props;
+  const borderClass = border ? borderClasses[border] : "";
   const { control, getValues } = useFormContext();
 
   const isIconExist = (Icon?: IconProps) => {
@@ -127,7 +136,7 @@ const FormInput = <T extends FieldValues>(
       disabled={!!disabled}
       render={({ field }) => {
         return (
-          <FormItem className="space-y-1">
+          <FormItem className="space-y-1 ">
             {label ? (
               <FormLabel className={cn("text-normal", labelClass)}>
                 {label}
@@ -137,7 +146,7 @@ const FormInput = <T extends FieldValues>(
               <div className="relative ">
                 {getIcon(leftIcon, ICON_COMMON_CLASSES("left-2"))}
                 <Input
-                  className={cn(rest.className, {
+                  className={cn(borderClass, rest.className, {
                     "pl-8": isIconExist(leftIcon),
                     "pr-8": isIconExist(rightIcon),
                   })}
