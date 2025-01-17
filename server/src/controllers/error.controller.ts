@@ -1,4 +1,6 @@
 import { NODE_ENV } from "@/constants";
+import { toUTC } from "@/utils/dateUtils";
+import { response } from "@/utils/requestResponse";
 import { ErrorRequestHandler, Response } from "express";
 
 const sendErrorDev = (err: Record<string, any>, res: Response) => {
@@ -9,13 +11,17 @@ const sendErrorDev = (err: Record<string, any>, res: Response) => {
     succes: false,
     message: err.message,
     stack: err.stack,
+    time: toUTC(new Date()),
   });
 };
 const sendErrorProd = (err: Record<string, any>, res: Response) => {
   // OPerational ,tursted error, send to client
   // like client send invalid data or like that.
   if (err.isOperational) {
-    res.status(err.statusCode).json({
+    response(res, {
+      statusCode: err.statusCode,
+      success: false,
+      data: null,
       status: err.status || "fail",
       message: err.message || "Something went wrong!",
     });
@@ -24,9 +30,13 @@ const sendErrorProd = (err: Record<string, any>, res: Response) => {
     // 1) Log error
     console.error("ERROR", err);
     // 2) Send generic message
-    res.status(500).json({
+
+    response(res, {
+      statusCode: 500,
       status: "error",
+      success: false,
       message: "Something went wrong!",
+      data: null,
     });
   }
 };

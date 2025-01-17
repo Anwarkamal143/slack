@@ -12,9 +12,13 @@ const authKey = COOKIE_NAME;
 const protect = catchAsync(async (req, res, next: NextFunction) => {
   // 1) Getting the token and check if it's there
   // let token;
-  let token = req.cookies[authKey] || req.headers.authorization;
-  let refreshToken =
+  const bearerToken = req.cookies[authKey] || req.headers.authorization;
+  const refreshToken =
     req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
+  let token = "";
+  if (bearerToken) {
+    token = bearerToken.split("Bearer ").pop();
+  }
   if (!token && !refreshToken) {
     return next(
       new AppError("You are not logged in! Please log in to get acccess.", 401)
@@ -74,13 +78,16 @@ const protect = catchAsync(async (req, res, next: NextFunction) => {
 const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
   // 1) Getting the token and check if it's there
   // let token;
-  let token = req.cookies[authKey] || req.headers.authorization;
-  let refreshToken =
+  const bearerToken = req.cookies[authKey] || req.headers.authorization;
+  const refreshToken =
     req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
+  let token = "";
+  if (bearerToken) {
+    token = bearerToken.split("Bearer ").pop();
+  }
   if (!token && !refreshToken) {
-    return next(
-      new AppError("You are not logged in! Please log in to get acccess.", 401)
-    );
+    req.user = undefined;
+    return next();
   }
   let tokenData = await verifyJwt(token);
   let isExpired = false;
@@ -94,6 +101,7 @@ const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
   }
   const { data } = tokenData;
   const user = await getUserById(data.id);
+
   if (!user.user?.id) {
     resetCookies(res);
     req.user = undefined;
@@ -111,6 +119,14 @@ const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
 
   next();
 });
+
+const apiProtected = catchAsync(async (req, res, next: NextFunction) => {
+  const apiKey = req.headers["x-api-key"];
+
+  if (!apiKey) {
+    return next(new AppError("Please provide and api key.", 401));
+  }
+});
 // Authorization
 // const restrictTo = (...roles) => {
 //   return (req, res, next) => {
@@ -122,4 +138,4 @@ const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
 //   };
 // };
 
-export { protect as isAuthenticated, isLoggedIn };
+export { apiProtected, protect as isAuthenticated, isLoggedIn };

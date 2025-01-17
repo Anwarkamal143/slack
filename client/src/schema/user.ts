@@ -1,4 +1,4 @@
-import { accounts, profile, user } from "@/lib/drizzle/schema/schema";
+import { accounts, user } from "@/lib/drizzle/schema/schema";
 import * as z from "zod";
 
 export const NewPasswordSchema = z.object({
@@ -37,12 +37,11 @@ export const RegisterSchema = z.object({
 });
 
 export type IUser = typeof user.$inferSelect;
-export type IProfile = typeof profile.$inferSelect;
+
 export type IAccount = typeof accounts.$inferInsert;
 
 export type IAppUser = IUser & {
   accounts: IAccount[];
-  profiles: IProfile[];
 };
 
 export type IInsertUser = z.infer<typeof RegisterSchema>;

@@ -69,7 +69,7 @@ export function jwtSignToken(props: IJwtTokenData) {
 // };
 
 export const createToken = (tokenData: { id: string; [key: string]: any }) => {
-  const token = jwtSignToken({ ...tokenData, expiresIn: "1m" });
+  const token = jwtSignToken({ ...tokenData, expiresIn: "30m" });
   const cookieOptions: CookieOptions = getCookiesOptions();
   const refreshToken = jwtSignToken({ ...tokenData });
   return {

@@ -53,7 +53,7 @@ type GenericTextfieldProps<T extends FieldValues> = UseControllerProps<T> &
   InputFormProps;
 
 const ICON_COMMON_CLASSES = (extra: string) =>
-  "h-[45%] absolute top-[50%] translate-y-[-50%] pointer-events-none " + extra;
+  "h-[45%] absolute top-[50%]  translate-y-[-50%] pointer-events-none " + extra;
 const borderClasses = {
   b: "border-transparent rounded-none border-solid border outline-none  border-b border-b-input hover:border-b-gray-300 focus-visible:border-b-gray-400 focus:border-b-gray-400 !ring-0 !ring-offset-0",
   t: "border-transparent rounded-none border-solid border outline-none  border-t border-t-input hover:border-t-gray-300 focus-visible:border-t-gray-400 focus:border-t-gray-400 !ring-0 !ring-offset-0",
@@ -145,6 +145,7 @@ const FormInput = <T extends FieldValues>(
             <FormControl>
               <div className="relative ">
                 {getIcon(leftIcon, ICON_COMMON_CLASSES("left-2"))}
+                {getIcon(rightIcon, ICON_COMMON_CLASSES("right-2"))}
                 <Input
                   className={cn(borderClass, rest.className, {
                     "pl-8": isIconExist(leftIcon),
@@ -155,7 +156,6 @@ const FormInput = <T extends FieldValues>(
                   placeholder={placeholder}
                   {...field}
                 />
-                {getIcon(rightIcon, ICON_COMMON_CLASSES("right-2"))}
               </div>
             </FormControl>
             <FormDescription>

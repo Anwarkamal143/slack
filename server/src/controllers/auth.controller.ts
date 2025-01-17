@@ -1,12 +1,18 @@
+import { COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/constants";
 import { createAccount } from "@/data-access/accounts";
-import { createProfile } from "@/data-access/profiles";
-import { createUser, getUserByEmail } from "@/data-access/users";
+import { createUser, getUserByEmail, getUserById } from "@/data-access/users";
 import { AccountType, ProviderType } from "@/db/schema";
 import { RegisterUserSchema } from "@/schemas/User";
-import { compareArgonHash, createArgonHash, setCookies } from "@/utils";
+import {
+  compareArgonHash,
+  createArgonHash,
+  resetCookies,
+  setCookies,
+  verifyJwt,
+} from "@/utils";
 import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
-import { generateRandomName } from "@/utils/lucia";
+import { response } from "@/utils/requestResponse";
 
 export const signUp = catchAsync(async (req, res, next) => {
   const { password: pas, name, email, ...rest } = req.body;
@@ -15,17 +21,16 @@ export const signUp = catchAsync(async (req, res, next) => {
     return next(new AppError(result.error?.errors[0].message, 400));
   }
   const existingUser = await getUserByEmail(result.data.email);
-  if (existingUser) {
+  if (existingUser.user) {
     return next(new AppError("Email already in use!", 400));
   }
   try {
     const hashedPassword = await createArgonHash(pas);
-    const user = await createUser({ email, password: hashedPassword });
-    await createAccount(user.id);
-    const profile = await createProfile(user.id, generateRandomName(name));
+    const user = await createUser({ email, password: hashedPassword, name });
     if (!user?.id) {
       return next(new AppError("Registratin Fail", 401));
     }
+    await createAccount(user.id);
 
     setCookies(res, {
       id: user.id,
@@ -34,15 +39,14 @@ export const signUp = catchAsync(async (req, res, next) => {
       email,
       provider: AccountType.email,
     });
-
-    res.status(201).json({
-      status: "success",
-
+    const { password, ...restUser } = user;
+    return response(res, {
+      message: "Account created successfully!",
       data: {
-        user: user,
-        profile: profile,
+        user: restUser,
         message: "Account created successfully!",
       },
+      statusCode: 201,
     });
   } catch (error) {
     return next(new AppError("Something went wrong", 500));
@@ -74,12 +78,10 @@ export const login = catchAsync(async (req, res, next) => {
       email,
       provider: AccountType.email,
     });
-
-    res.status(200).json({
-      error: false,
+    const { password: psd, ...restUser } = user;
+    return response(res, {
       message: "LoggedIn successfully",
-      success: true,
-      user: user,
+      data: restUser,
     });
   } catch (error) {
     return next(new AppError("Something went wrong", 500));
@@ -92,5 +94,43 @@ export const test = catchAsync(async (req, res, next) => {
     message: "LoggedIn successfully",
     success: true,
     user: {},
+  });
+});
+
+export const refreshTokens = catchAsync(async (req, res, next) => {
+  const bearerToken = req.cookies[COOKIE_NAME] || req.headers.authorization;
+  const refreshToken =
+    req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
+  let token = "";
+  if (bearerToken) {
+    token = bearerToken.split("Bearer ").pop();
+  }
+  if (!token && !refreshToken) {
+    return next(new AppError("You are not loggedin", 401));
+  }
+  let tokenData = await verifyJwt(token);
+  if (!tokenData) {
+    tokenData = await verifyJwt(refreshToken);
+    if (!tokenData) {
+      return next(new AppError("You are not loggedin", 401));
+    }
+  }
+  const { data } = tokenData;
+  const user = await getUserById(data.id);
+
+  if (!user.user?.id) {
+    resetCookies(res);
+    return response(res, {
+      statusCode: 200,
+      message: "Token not refreshed",
+      data: null,
+    });
+  }
+
+  setCookies(res, data);
+  return response(res, {
+    statusCode: 200,
+    message: "Token refreshed",
+    data: null,
   });
 });

@@ -1,8 +1,9 @@
 "use server";
 
 import { COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/config";
+import { getUserById } from "@/data/user";
 
-import { createToken, verifyJwt } from "@/lib/jwtToken";
+import { verifyAndCreateToken } from "@/lib/jwtToken";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -18,25 +19,19 @@ export const getCookieUser = async (
   const rCookies = requestCookies || cookies;
   const token = (await rCookies()).get(COOKIE_NAME)?.value;
   const refreshToken = (await rCookies()).get(REFRESH_COOKIE_NAME)?.value;
-  console.log({ token, refreshToken });
   return new Promise(async (res, rej) => {
-    if (!token && !refreshToken) {
-      return res(null);
-    }
-    let tokenData = await verifyJwt(token);
-    if (!tokenData) {
-      tokenData = await verifyJwt(refreshToken);
-      if (!tokenData) {
-        return res(null);
-      }
-      const { data } = tokenData;
+    const response = await verifyAndCreateToken(token, refreshToken);
+    if (response?.data) {
       const {
         token_attributes,
         refresh_attributes,
         refreshToken: refToken,
         token,
-      } = await createToken(data);
-      console.log({ data });
+      } = response.data;
+      const user = getUserById(response.user.id);
+      if (!user) {
+        return res(null);
+      }
       try {
         (await rCookies()).set(COOKIE_NAME, token, token_attributes);
         (await rCookies()).set(
@@ -48,7 +43,10 @@ export const getCookieUser = async (
         console.log(error, "Error on setting");
       }
     }
-    const { data } = tokenData;
-    return res(data);
+    if (response?.user) {
+      const { user } = response;
+      return res(user);
+    }
+    return res(null);
   });
 };

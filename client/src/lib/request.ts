@@ -1,4 +1,5 @@
 import { API_BASE_URL, POKEMON_API_BASE_URL } from "@/config";
+import useRefreshStore from "@/store/useRefreshTokens";
 import axios, {
   AxiosRequestConfig,
   AxiosResponse,
@@ -44,6 +45,7 @@ interface IAxiosRequest extends Partial<AxiosRequestConfig> {
   handleError?: boolean;
   attachToken?: boolean;
   attachAccountId?: boolean;
+  token?: string;
 }
 
 const axiosRequest = axios.create({
@@ -52,22 +54,51 @@ const axiosRequest = axios.create({
   withCredentials: true,
 });
 
+export let requestQueue: any = []; // Queue to hold pending requests
+
+const isRefreshing = useRefreshStore.getState().isRefreshing;
+// Add request interceptor
+
 axiosRequest.interceptors.request.use(
   (reqConfig: InternalAxiosRequestConfig<any> & IAxiosRequest) => {
-    const { attachToken = true, attachAccountId = true, ...config } = reqConfig;
+    const {
+      attachToken = true,
+      attachAccountId = true,
+      token = "",
+      ...config
+    } = reqConfig;
+    if (attachToken) {
+      // const token = getLocalStorage("token", false);
+      const jwtToken = `Bearer ${token}`;
 
-    // if (attachToken) {
-    //   const token = getLocalStorage("token", false);
-    //   const jwtToken = `Bearer ${token}`;
+      if (token) {
+        config.headers && (config.headers[TOKEN_PAYLOAD_KEY] = jwtToken);
+      }
 
-    //   if (token) {
-    //     config.headers && (config.headers[TOKEN_PAYLOAD_KEY] = jwtToken);
-    //   }
+      if (!jwtToken && !config.public) {
+        Promise.reject("Attach a token in request or mark it public");
+      }
+    }
+    if (isRefreshing) {
+      // Token is expired
+      return new Promise((resolve) => {
+        requestQueue.push(() => {
+          resolve(config);
+        });
+      });
+    } else {
+      // If already refreshing, queue the request
+      try {
+        // Retry all queued requests
+        requestQueue.forEach((cb: any) => cb());
+        requestQueue = []; // Clear the queue
 
-    //   if (!jwtToken && !config.public) {
-    //     Promise.reject("Attach a token in request or mark it public");
-    //   }
-    // }
+        return config;
+      } catch (error) {
+        requestQueue = []; // Clear the queue on error
+        return Promise.reject(error);
+      }
+    }
 
     return config;
   },
@@ -95,6 +126,7 @@ const errorHandler = (error: RequestError): CustomResponse => {
       success: false,
       errorHandled: true,
       reason: "cancelled",
+
       ...error,
     };
   }

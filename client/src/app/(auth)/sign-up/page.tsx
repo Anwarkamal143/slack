@@ -31,24 +31,23 @@ const SignUpPage = (props: Props) => {
   const setUser = useUserStore((state) => state.setUser);
   const onSubmit = async (e: SignUpSchemaType) => {
     const result = await signUp(e);
-
     if (result.success) {
       toast.success(result.message);
+      const { user, profile } = result.data;
       setUser({
-        user: result.data.user as IUser,
+        user: user as IUser,
         isAuthenticated: true,
         isLoggedIn: true,
       });
-      return router.push("/client");
+      return router.replace("/client");
     }
     toast.error(result.message);
   };
 
   const SignInWithG = async () => {
-    console.log("SignIn With Google");
     try {
       const result = await signInWithGoogle();
-      router.replace(result);
+      router.replace(result.data);
     } catch (error) {}
   };
 
@@ -67,7 +66,7 @@ const SignUpPage = (props: Props) => {
             >
               Sign up
             </Button>
-            <SeparatorText text="OR" />
+            <SeparatorText text="OR" className="py-1" />
             <Button
               type="button"
               variant={"outline"}
@@ -78,7 +77,7 @@ const SignUpPage = (props: Props) => {
             </Button>
             <div className="flex  gap-1 text-sm">
               <span className="text-gray-400">Alreay have an account?</span>
-              <Link href={"/login"} className="text-blue-400">
+              <Link href={"/login"} className="text-blue-400 hover:underline">
                 Login
               </Link>
             </div>

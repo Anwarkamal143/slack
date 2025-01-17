@@ -1,7 +1,3 @@
-// src/utils/statusCodes.ts
-
-import { Response } from "express";
-
 export const STATUS_CODES = {
   // Success Codes
   OK: 200,
@@ -15,7 +11,9 @@ export const STATUS_CODES = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   METHOD_NOT_ALLOWED: 405,
+  NOT_ACCEPTABLE: 406,
   CONFLICT: 409,
+  CONTENT_NOT_EXIST: 410,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
   TOO_MANY_REQUESTS: 429,
@@ -32,8 +30,3 @@ export const STATUS_CODES = {
 export type StatusCode = keyof typeof STATUS_CODES;
 export type StatusCodeNumbers =
   (typeof STATUS_CODES)[keyof typeof STATUS_CODES];
-export const createResponse = (
-  res: Response,
-  status: StatusCode,
-  message: String | string[] | Object
-) => {};

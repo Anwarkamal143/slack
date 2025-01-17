@@ -1,9 +1,8 @@
-import { IAccount, IProfile, IUser } from "@/schema/user";
+import { IAccount, IUser } from "@/schema/user";
 import { create } from "zustand";
 
 type IUserState = {
   user?: IUser;
-  profiles?: IProfile[];
   accounts?: IAccount[];
   isAuthenticated?: boolean;
   isLoggedIn?: boolean;
@@ -15,18 +14,21 @@ type IUserActions = {
 };
 const INITIAL_STATE = {
   user: undefined,
-  profiles: [],
   accounts: [],
   isAuthenticated: false,
   isLoggedIn: false,
 };
+export const storeResetFns = new Set<() => void>();
 const useUserStore = create<IUserActions & IUserState>()((set) => ({
   ...INITIAL_STATE,
   setUser(props) {
     set({ ...props });
   },
 
-  reset: () => set({ ...INITIAL_STATE }),
+  reset() {
+    set({ ...INITIAL_STATE });
+    storeResetFns.add(() => set({ ...INITIAL_STATE }));
+  },
 }));
 
 export default useUserStore;

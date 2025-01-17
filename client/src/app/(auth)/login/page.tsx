@@ -32,6 +32,7 @@ const SignInPage = (props: Props) => {
   const onSubmit = async (e: SignInSchemaType) => {
     try {
       const result = await signIn({ email: e.email, password: e.password });
+      console.log(result, "Result");
       if (result.success) {
         toast.success(result.message);
         setUser({
@@ -49,10 +50,10 @@ const SignInPage = (props: Props) => {
   };
 
   const SignInWithG = async () => {
-    console.log("SignIn With Google");
     try {
       const result = await signInWithGoogle();
-      router.replace(result);
+      const { data } = result;
+      router.replace(data);
     } catch (error) {}
   };
   return (
@@ -74,7 +75,7 @@ const SignInPage = (props: Props) => {
                   >
                     Login
                   </Button>
-                  <SeparatorText text="OR" />
+                  <SeparatorText text="OR" className="py-1" />
                   <Button
                     type="button"
                     variant={"outline"}
@@ -83,11 +84,14 @@ const SignInPage = (props: Props) => {
                   >
                     <GoogleIcon /> Continue with Google
                   </Button>
-                  <div className="flex  gap-1 text-sm">
+                  <div className="flex  gap-1 pt-1 text-sm">
                     <span className="text-gray-400">
                       Don&apos;t have an account?
                     </span>
-                    <Link href={"/sign-up"} className="text-blue-400">
+                    <Link
+                      href={"/sign-up"}
+                      className="text-blue-400 hover:underline"
+                    >
                       Sign Up
                     </Link>
                   </div>
