@@ -1,5 +1,5 @@
 "use client";
-import SignOutButton from "@/components/SignOutButton";
+import UserButton from "@/components/user-button";
 import useUserStore from "@/store/userStore";
 type Props = {};
 
@@ -14,7 +14,7 @@ const DashboardPage = (props: Props) => {
           {user?.name}
         </em>{" "}
       </h1>
-      <SignOutButton />
+      <UserButton />
     </div>
   );
 };

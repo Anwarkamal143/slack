@@ -42,10 +42,7 @@ export const signUp = catchAsync(async (req, res, next) => {
     const { password, ...restUser } = user;
     return response(res, {
       message: "Account created successfully!",
-      data: {
-        user: restUser,
-        message: "Account created successfully!",
-      },
+      data: restUser,
       statusCode: 201,
     });
   } catch (error) {

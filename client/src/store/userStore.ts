@@ -1,5 +1,6 @@
 import { IAccount, IUser } from "@/schema/user";
 import { create } from "zustand";
+import { storeResetFns } from "./useGlobalStore";
 
 type IUserState = {
   user?: IUser;
@@ -18,7 +19,6 @@ const INITIAL_STATE = {
   isAuthenticated: false,
   isLoggedIn: false,
 };
-export const storeResetFns = new Set<() => void>();
 const useUserStore = create<IUserActions & IUserState>()((set) => ({
   ...INITIAL_STATE,
   setUser(props) {

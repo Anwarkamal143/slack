@@ -1,5 +1,5 @@
 {
-  "id": "9708cc48-a0a5-4cd0-9cf1-66844b685f6a",
+  "id": "ce36752b-a524-445d-81bc-49d221f28408",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -21,9 +21,10 @@
           "primaryKey": false,
           "notNull": true
         },
-        "type": {
-          "name": "type",
-          "type": "text",
+        "account_type": {
+          "name": "account_type",
+          "type": "account_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -189,7 +190,7 @@
           "name": "name",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "password": {
           "name": "password",
@@ -316,8 +317,8 @@
     }
   },
   "enums": {
-    "public.type": {
-      "name": "type",
+    "public.account_type": {
+      "name": "account_type",
       "schema": "public",
       "values": [
         "oauth",

@@ -13,13 +13,14 @@ import { IUser } from "@/schema/user";
 import useUserStore from "@/store/userStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 type Props = {};
 
 const SignInPage = (props: Props) => {
   const router = useRouter();
-
+  const [isSocialLogginIn, setIsSocialLogginIn] = useState(false);
   const setUser = useUserStore((state) => state.setUser);
 
   const form = useZodForm({
@@ -32,11 +33,10 @@ const SignInPage = (props: Props) => {
   const onSubmit = async (e: SignInSchemaType) => {
     try {
       const result = await signIn({ email: e.email, password: e.password });
-      console.log(result, "Result");
       if (result.success) {
         toast.success(result.message);
         setUser({
-          user: result.data.user as IUser,
+          user: result.data as IUser,
           isAuthenticated: true,
           isLoggedIn: true,
         });
@@ -51,11 +51,17 @@ const SignInPage = (props: Props) => {
 
   const SignInWithG = async () => {
     try {
+      setIsSocialLogginIn(true);
       const result = await signInWithGoogle();
       const { data } = result;
       router.replace(data);
-    } catch (error) {}
+    } catch (error) {
+    } finally {
+      setIsSocialLogginIn(false);
+    }
   };
+  const { formState } = form;
+  const isFormSubmitting = formState.isSubmitting || isSocialLogginIn;
   return (
     <>
       <div className="relative  flex w-full bg-background  h-screen  justify-center items-center   ">
@@ -72,6 +78,7 @@ const SignInPage = (props: Props) => {
                     type="button"
                     className="w-full"
                     onClick={form.handleSubmit(onSubmit)}
+                    disabled={isFormSubmitting}
                   >
                     Login
                   </Button>
@@ -81,6 +88,7 @@ const SignInPage = (props: Props) => {
                     variant={"outline"}
                     className=" w-full gap-2 text-gray-600"
                     onClick={SignInWithG}
+                    disabled={isFormSubmitting}
                   >
                     <GoogleIcon /> Continue with Google
                   </Button>

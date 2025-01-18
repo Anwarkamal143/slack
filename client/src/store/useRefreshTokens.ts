@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { storeResetFns } from "./userStore";
+import { storeResetFns } from "./useGlobalStore";
 
 type IRefreshTokenState = {
   isRefreshing: boolean;

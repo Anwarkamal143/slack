@@ -7,7 +7,7 @@ export const type = pgEnum("type", ['oauth', 'email'])
 
 export const user = pgTable("user", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
-	name: text(),
+	name: text().notNull(),
 	password: text(),
 	email: text().notNull(),
 	emailVerified: timestamp({ mode: 'string' }),
