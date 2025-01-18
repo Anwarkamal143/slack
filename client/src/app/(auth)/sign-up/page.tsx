@@ -33,7 +33,7 @@ const SignUpPage = (props: Props) => {
     const result = await signUp(e);
     if (result.success) {
       toast.success(result.message);
-      const { user, profile } = result.data;
+      const { user } = result.data;
       setUser({
         user: user as IUser,
         isAuthenticated: true,
