@@ -18,7 +18,13 @@ export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 export const HOST_NAME = process.env.HOST_NAME || "";
 
-export const AFTER_LOGIN_URL = process.env.DOMAIN_URL || "";
+export const AFTER_LOGIN_URL = process.env.APP_URL || "";
+
+export const STRIPE_ENVS = {
+  secretKey: process.env.STRIPE_SECRET_KEY,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  priceId: process.env.STRIPE_PRICE_ID,
+};
 
 export const getCookiesOptions = (cookies: CookieOptions = {}) => {
   const updatedCookies = { ...cookies };

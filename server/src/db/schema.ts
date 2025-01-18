@@ -41,13 +41,14 @@ const createdAt = timestamp("created_at", { withTimezone: true })
   .notNull();
 export const user = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
-  // name: text("name"),
+  name: text("name"),
   password: text("password"),
   email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", {
     mode: "date",
   }),
   role: roleEnum("role").default(Role.USER),
+  image: text("image"),
   createdAt,
   updatedAt,
 });
@@ -73,7 +74,7 @@ export const accounts = pgTable("accounts", {
 });
 
 export const reset_tokens = pgTable("reset_tokens", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
   userId: uuid("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .unique()
@@ -85,7 +86,7 @@ export const reset_tokens = pgTable("reset_tokens", {
 });
 
 export const verify_email_tokens = pgTable("verify_email_tokens", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
   userId: uuid("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .unique()
@@ -94,19 +95,4 @@ export const verify_email_tokens = pgTable("verify_email_tokens", {
   tokenExpiresAt: integer("token_expires_at").notNull(),
 });
 
-export const profile = pgTable("profile", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  userId: uuid("userId")
-    .references(() => user.id, { onDelete: "cascade" })
-    .unique()
-    .notNull(),
-  name: text("name"),
-  imageId: text("image_id"),
-  image: text("image"),
-  bio: text("bio").notNull().default(""),
-  createdAt,
-  updatedAt,
-});
-
 export type User = typeof user.$inferSelect;
-export type Profile = typeof profile.$inferSelect;

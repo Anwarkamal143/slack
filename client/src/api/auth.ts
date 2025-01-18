@@ -6,30 +6,39 @@ import {
   SignUpSchemaType,
 } from "@/schema/auth";
 import { IAppUser } from "@/schema/user";
+import { IResponseType } from "@/types/response";
 
 export const getAuthUser = async (
-  Authorization?: string
-): Promise<IAppUser | null> => {
-  const headers = Authorization
-    ? {
-        headers: {
-          Authorization: `Bearer ${Authorization}`,
-        },
-      }
-    : {};
+  authToken?: string
+): Promise<IResponseType<IAppUser | null>> => {
   const res = await request("users/me", {
-    ...headers,
+    token: authToken,
   });
+
+  return res.data;
+};
+export const getRefreshToken = async (): Promise<
+  IResponseType<IAppUser | null>
+> => {
+  const res = await request("auth/refresh");
 
   return res.data;
 };
 
 export const signInWithGoogle = async () => {
-  const res = await request("google", {
-    method: "GET",
-  });
-
-  return res.data;
+  try {
+    const res = await request("google", {
+      method: "GET",
+    });
+    return res.data as IResponseType<any>;
+  } catch (error: any) {
+    return {
+      message: error.message || "Something went wrong",
+      success: false,
+      error: true,
+      data: null,
+    };
+  }
 };
 
 export const signUp = async (values: SignUpSchemaType) => {
@@ -52,13 +61,11 @@ export const signUp = async (values: SignUpSchemaType) => {
         name,
       },
     });
-    return { data: res.data, success: true };
+    return res.data;
   } catch (error: any) {
-    console.log(error, "error");
     return {
       message: error.message || "Something went wrong",
       success: false,
-      error: true,
     };
   }
 };
@@ -82,9 +89,8 @@ export const signIn = async (values: SignInSchemaType) => {
         password,
       },
     });
-    return { data: res.data, success: true };
+    return res.data;
   } catch (error: any) {
-    console.log(error, "error");
     return {
       message: error.message || "Something went wrong",
       success: false,

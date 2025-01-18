@@ -3,7 +3,6 @@ import { ProviderType, user as users } from "@/db/schema";
 import { IUser } from "@/schemas/User";
 import { IGoogleUser } from "@/types/ISocial";
 import { createAccountViaGoogle } from "./accounts";
-import { createProfile } from "./profiles";
 
 import { getAccountByProviderId } from "@/data-access/accounts";
 import { toUTC } from "@/utils/dateUtils";
@@ -26,12 +25,12 @@ export async function createGoogleUserUseCase(googleUser: IGoogleUser) {
     existingUser.user = await createUser({
       email: googleUser.email,
       emailVerified: toUTC(new Date(), false),
+      name: googleUser.name,
+      image: googleUser.picture,
     });
   }
   const user = existingUser.user;
   await createAccountViaGoogle(user.id, googleUser.sub);
-
-  await createProfile(user.id, googleUser.name, googleUser.picture);
 
   return user;
 }
@@ -86,12 +85,6 @@ export const getUser_Profile_Account_ById = async (id: string) => {
         accounts: {
           where(fields, { eq, and }) {
             return eq(fields.userId, id);
-          },
-          limit: 1,
-        },
-        profiles: {
-          where(fields, { and, eq }) {
-            return and(eq(fields.userId, id));
           },
           limit: 1,
         },

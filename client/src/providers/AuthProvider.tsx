@@ -1,56 +1,23 @@
 "use client";
-import { getAuthUser } from "@/api/auth";
 import useUserStore from "@/store/userStore";
-import { ReactNode, Suspense, useEffect, useState } from "react";
-import PageLoader from "../components/loader";
-import SocketContextProvider from "./SocketProvider";
+import { useRouter } from "next/navigation";
+import { ReactNode, useEffect } from "react";
 type Props = {
   children: ReactNode;
 };
 
 export default function AuthProvider(props: Props) {
   const { children } = props;
-  const [isLoading, setIsLoading] = useState(true);
-  const [isServer, setIsServer] = useState(true);
 
-  const setUser = useUserStore((state) => state.setUser);
+  const router = useRouter();
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
 
-  const onGetUser = async () => {
-    try {
-      setIsLoading(true);
-      const data = await getAuthUser();
-      if (data?.id) {
-        const { accounts, profiles, ...rest } = data;
-        setUser({
-          user: rest,
-          accounts,
-          profiles,
-          isAuthenticated: true,
-          isLoggedIn: true,
-        });
-      }
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  };
   useEffect(() => {
-    setIsServer(false);
-    onGetUser();
-
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
     return () => {};
-  }, []);
+  }, [isAuthenticated]);
 
-  if (isServer) {
-    return null;
-  }
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  return (
-    <SocketContextProvider>
-      <Suspense fallback={<PageLoader />}>{children}</Suspense>
-    </SocketContextProvider>
-  );
+  return <>{children}</>;
 }

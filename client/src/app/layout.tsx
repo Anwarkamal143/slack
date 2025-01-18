@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
-import AuthProvider from "@/providers/AuthProvider";
+import AppProvider from "@/providers/AppProvider";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className="" suppressHydrationWarning={true}>
-        <AuthProvider>{children}</AuthProvider>
+        <AppProvider>{children}</AppProvider>
         <Toaster richColors />
       </body>
     </html>

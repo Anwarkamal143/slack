@@ -1,9 +1,8 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser } from "./api/auth";
 import { COOKIE_NAME, REFRESH_COOKIE_NAME } from "./config";
-import { createToken, verifyJwt } from "./lib/jwtToken";
-import { db } from "./lib/drizzle";
-import { getUserById } from "./data/user";
+import { verifyAndCreateToken } from "./lib/jwtToken";
 
 // This function can be marked `async` if using `await` inside
 
@@ -46,12 +45,16 @@ const getServerUser = async (
   data: Record<string, any> | null;
 }> => {
   return new Promise(async (res, rej) => {
-    const response = await verifyAndCreateAuthToken(token, refreshToken);
-    return res(response);
+    try {
+      const response = await verifyAndCreateAuthTokens(token, refreshToken);
+      return res(response);
+    } catch (error) {
+      return res(null);
+    }
   });
 };
 
-async function verifyAndCreateAuthToken(
+async function verifyAndCreateAuthTokens(
   token: string | undefined,
   refreshToken: string | undefined
 ) {
@@ -59,41 +62,26 @@ async function verifyAndCreateAuthToken(
     user: IServerCookieType;
     data: Record<string, any> | null;
   } = null;
-  if (!token || !refreshToken) {
-    return response;
-  }
-  let tokenData = await verifyJwt(token);
-  if (!tokenData) {
-    getUserById()
-    tokenData = await verifyJwt(refreshToken);
-    if (!tokenData) {
-      return response;
-    }
-    const { data } = tokenData;
-    const {
-      token_attributes,
-      refresh_attributes,
-      refreshToken: refToken,
-      token,
-    } = await createToken(data as any);
-    response = {
-      user: data as any,
-      data: {
+  try {
+    response = await verifyAndCreateToken(token, refreshToken);
+    if (response?.data) {
+      const {
         token_attributes,
         refresh_attributes,
         refreshToken: refToken,
-        token,
-      },
-    };
-    (await cookies()).set(COOKIE_NAME, token, token_attributes);
-    (await cookies()).set(REFRESH_COOKIE_NAME, refToken, refresh_attributes);
-  } else {
-    response = {
-      data: null,
-      user: tokenData?.data as any,
-    };
-    console.log({ response });
-  }
+        token: nToken,
+      } = response.data;
+      const user = await getAuthUser(nToken);
 
-  return response;
+      if (!user) {
+        return response;
+      }
+      (await cookies()).set(COOKIE_NAME, nToken, token_attributes);
+      (await cookies()).set(REFRESH_COOKIE_NAME, refToken, refresh_attributes);
+      return response;
+    }
+    return response;
+  } catch (error) {
+    return response;
+  }
 }

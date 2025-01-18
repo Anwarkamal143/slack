@@ -8,6 +8,7 @@ import { AccountType, ProviderType } from "@/db/schema";
 import { setCookies } from "@/utils";
 import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
+import { response } from "@/utils/requestResponse";
 import { getArcticeMethods, googleAuth } from "@/utils/socialauth";
 import { OAuth2Tokens } from "arctic";
 import { CookieOptions, Response } from "express";
@@ -45,7 +46,11 @@ export const googleSignAuth = catchAsync(async (req, res, next) => {
     ]);
 
     // const url = new URL(generatedURL);
-    return res.status(200).json(generatedURL);
+    return response(res, {
+      success: true,
+      message: "Redirect URL generated",
+      data: generatedURL,
+    });
   } catch (error) {
     return next(new AppError("Something went wrong", 500));
   }
