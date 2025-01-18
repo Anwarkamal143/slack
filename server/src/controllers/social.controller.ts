@@ -92,7 +92,6 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
     // );
     // const googleUser = (await response.json()) as IGoogleUser;
     const googleUser = decodeIdToken(tokens.idToken());
-    console.log({ tokens, googleUser });
     const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
     if (existingAccount) {
       const user = await getUserById(existingAccount.userId);

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import UserButton from "@/components/ui/user-button";
+import UserButton from "@/components/user-button";
 import useUserStore from "@/store/userStore";
 import { useRouter } from "next/navigation";
 

@@ -1,9 +1,9 @@
-CREATE TYPE "public"."type" AS ENUM('oauth', 'email');--> statement-breakpoint
+CREATE TYPE "public"."account_type" AS ENUM('oauth', 'email');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TABLE "accounts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"userId" uuid NOT NULL,
-	"type" text NOT NULL,
+	"account_type" "account_type" NOT NULL,
 	"provider" text NOT NULL,
 	"providerAccountId" text,
 	"refresh_token" text,
@@ -26,7 +26,7 @@ CREATE TABLE "reset_tokens" (
 --> statement-breakpoint
 CREATE TABLE "user" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text,
+	"name" text NOT NULL,
 	"password" text,
 	"email" text NOT NULL,
 	"emailVerified" timestamp,

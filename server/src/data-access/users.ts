@@ -8,7 +8,7 @@ import { getAccountByProviderId } from "@/data-access/accounts";
 import { toUTC } from "@/utils/dateUtils";
 
 export async function createUser(
-  data: { email: string } & Partial<Omit<IUser, "email">>
+  data: { email: string; name: string } & Partial<Omit<IUser, "email">>
 ) {
   const [user] = await db
     .insert(users)
