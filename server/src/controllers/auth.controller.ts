@@ -15,7 +15,7 @@ import catchAsync from "@/utils/catchAsync";
 import { response } from "@/utils/requestResponse";
 
 export const signUp = catchAsync(async (req, res, next) => {
-  const { password: pas, name, email, ...rest } = req.body;
+  const { password: pas, name, email } = req.body;
   const result = RegisterUserSchema.safeParse(req.body);
   if (!result.success) {
     return next(new AppError(result.error?.errors[0].message, 400));
@@ -85,7 +85,7 @@ export const login = catchAsync(async (req, res, next) => {
   }
 });
 
-export const test = catchAsync(async (req, res, next) => {
+export const test = catchAsync(async (_req, res, _next) => {
   res.status(200).json({
     error: false,
     message: "LoggedIn successfully",
@@ -95,12 +95,18 @@ export const test = catchAsync(async (req, res, next) => {
 });
 
 export const refreshTokens = catchAsync(async (req, res, next) => {
-  const bearerToken = req.cookies[COOKIE_NAME] || req.headers.authorization;
   const refreshToken =
     req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
   let token = "";
-  if (bearerToken) {
-    token = bearerToken.split("Bearer ").pop();
+  // Check Authorization header
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1]; // Extract token from "Bearer <token>"
+  }
+
+  // Check cookies if token is not in the Authorization header
+  if (!token && req.cookies && req.cookies[COOKIE_NAME]) {
+    token = req.cookies[COOKIE_NAME]; // Replace 'accessToken' with your cookie name
   }
   if (!token && !refreshToken) {
     return next(new AppError("You are not loggedin", 401));

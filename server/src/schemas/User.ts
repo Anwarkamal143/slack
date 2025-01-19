@@ -1,4 +1,4 @@
-import { user } from "@/db/schema";
+import { accounts, user } from "@/db/schema";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,3 +22,4 @@ export const LoginSchema = createInsertSchema(user, {
 export type IUser = typeof user.$inferSelect;
 export type IRegisterUser = z.infer<typeof RegisterUserSchema>;
 export type ILogInUser = z.infer<typeof LoginSchema>;
+export type IAccount = typeof accounts.$inferSelect;

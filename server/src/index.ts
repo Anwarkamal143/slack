@@ -45,7 +45,7 @@ server.listen(PORT, () => {
 });
 
 app.use(BASE_API_PATH, router);
-app.all("*", (req, res, next) => {
+app.all("*", (req, _, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 app.use(errorHandler);

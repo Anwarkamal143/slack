@@ -14,7 +14,6 @@ type Props = {};
 
 const UserButton = (props: Props) => {
   const user = useUserStore((state) => state.user);
-  console.log({ user });
   const avatarFallback = user?.name.charAt(0).toUpperCase();
   const onLogout = () => {
     resetAllStores();

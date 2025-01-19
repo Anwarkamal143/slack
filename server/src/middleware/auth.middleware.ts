@@ -12,12 +12,18 @@ const authKey = COOKIE_NAME;
 const protect = catchAsync(async (req, res, next: NextFunction) => {
   // 1) Getting the token and check if it's there
   // let token;
-  const bearerToken = req.cookies[authKey] || req.headers.authorization;
   const refreshToken =
     req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
   let token = "";
-  if (bearerToken) {
-    token = bearerToken.split("Bearer ").pop();
+  // Check Authorization header
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1]; // Extract token from "Bearer <token>"
+  }
+
+  // Check cookies if token is not in the Authorization header
+  if (!token && req.cookies && req.cookies[authKey]) {
+    token = req.cookies[authKey]; // Replace 'accessToken' with your cookie name
   }
   if (!token && !refreshToken) {
     return next(
@@ -78,12 +84,18 @@ const protect = catchAsync(async (req, res, next: NextFunction) => {
 const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
   // 1) Getting the token and check if it's there
   // let token;
-  const bearerToken = req.cookies[authKey] || req.headers.authorization;
   const refreshToken =
     req.cookies[REFRESH_COOKIE_NAME] || req.headers.refreshToken;
   let token = "";
-  if (bearerToken) {
-    token = bearerToken.split("Bearer ").pop();
+  // Check Authorization header
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1]; // Extract token from "Bearer <token>"
+  }
+
+  // Check cookies if token is not in the Authorization header
+  if (!token && req.cookies && req.cookies[authKey]) {
+    token = req.cookies[authKey]; // Replace 'accessToken' with your cookie name
   }
   if (!token && !refreshToken) {
     req.user = undefined;
@@ -120,7 +132,7 @@ const isLoggedIn = catchAsync(async (req, res, next: NextFunction) => {
   next();
 });
 
-const apiProtected = catchAsync(async (req, res, next: NextFunction) => {
+const apiProtected = catchAsync(async (req, _res, next: NextFunction) => {
   const apiKey = req.headers["x-api-key"];
 
   if (!apiKey) {

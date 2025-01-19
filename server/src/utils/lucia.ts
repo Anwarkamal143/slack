@@ -1,4 +1,5 @@
 import { adjectives, nouns } from "@/constants";
+
 export const osloPassword = async () => {
   const oslopassword = (await eval('import("oslo/password")')) as Promise<any>;
   return oslopassword;

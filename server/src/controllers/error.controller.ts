@@ -41,7 +41,7 @@ const sendErrorProd = (err: Record<string, any>, res: Response) => {
   }
 };
 
-export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
+export const errorHandler: ErrorRequestHandler = (error, _, res, _n) => {
   //   console.log(err.stack);
   error.statusCode = error.statusCode || 500;
   error.status = error.status || "error";

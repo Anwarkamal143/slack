@@ -1,13 +1,11 @@
-import { CookieOptions } from "express";
-
 export const DB_URL = process.env.DB_URL || "";
 export const PORT = process.env.PORT || 4000;
 export const JWT_SECRET =
   process.env.JWT_SECRET || "xLDL9bqmNO=PI9Q5O`+#GnGFTukFKl";
 
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "90d";
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 export const JWT_COOKIE_EXPIRES_IN = Number(
-  process.env.JWT_COOKIE_EXPIRES_IN || "90"
+  process.env.JWT_COOKIE_EXPIRES_IN || "7"
 );
 export const COOKIE_NAME = process.env.COOKIE_NAME || "slack_jwt";
 export const REFRESH_COOKIE_NAME =
@@ -25,12 +23,20 @@ export const STRIPE_ENVS = {
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   priceId: process.env.STRIPE_PRICE_ID,
 };
-
-export const getCookiesOptions = (cookies: CookieOptions = {}) => {
+const getCookieTime = (expiresIn: number = 1) => {
+  const expireIn = expiresIn * 24 * 60 + 2;
+  return new Date(Date.now() + expireIn * 60 * 1000);
+};
+export const getCookiesOptions = (props?: {
+  cookies?: Record<string, any>;
+  expiresIn?: number;
+}) => {
+  const { cookies, expiresIn = JWT_COOKIE_EXPIRES_IN } = props || {
+    expiresIn: JWT_COOKIE_EXPIRES_IN,
+    cookies: {},
+  };
   const updatedCookies = { ...cookies };
-  updatedCookies.expires =
-    updatedCookies.expires ||
-    new Date(Date.now() + JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000);
+  updatedCookies.expires = updatedCookies.expires || getCookieTime(expiresIn);
   updatedCookies.httpOnly = updatedCookies.httpOnly || true;
   updatedCookies.sameSite = updatedCookies.sameSite || "lax";
   updatedCookies.path = updatedCookies.path || "/";

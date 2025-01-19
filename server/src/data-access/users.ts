@@ -46,9 +46,7 @@ export async function getAccountByGithubIdUseCase(githubId: string) {
 export const getUserByEmail = async (email: string) => {
   try {
     const user = await db.query.user.findFirst({
-      where: (fields, { eq }) => {
-        return eq(fields.email, email);
-      },
+      where: (fields) => eq(fields.email, email),
     });
 
     return { user: user, error: null };
@@ -61,9 +59,10 @@ export const getUserByEmail = async (email: string) => {
 export const getUserById = async (id: string) => {
   try {
     const user = await db.query.user.findFirst({
-      where: (fields, { eq }) => {
-        return eq(fields.id, id);
-      },
+      where: (fields) => eq(fields.id, id),
+      // where: (fields, { eq }) => {
+      //   return eq(fields.id, id);
+      // },
     });
 
     return { user, error: null };
@@ -75,17 +74,20 @@ export const getUserById = async (id: string) => {
 export const getUser_Profile_Account_ById = async (id: string) => {
   try {
     const user = await db.query.user.findFirst({
-      where(fields, { eq }) {
-        return eq(fields.id, id);
-      },
+      where: (fields) => eq(fields.id, id),
+
+      // where: (fields, { eq }) => {
+      //   return eq(fields.id, id);
+      // },
       columns: {
         password: false,
       },
       with: {
         accounts: {
-          where(fields, { eq, and }) {
-            return eq(fields.userId, id);
-          },
+          where: (fields) => eq(fields.userId, id),
+          // where: (fields, { eq }) =>  {
+          //   return eq(fields.userId, id);
+          // },
           limit: 1,
         },
       },

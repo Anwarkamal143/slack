@@ -6,7 +6,7 @@ import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
 import { response } from "@/utils/requestResponse";
 
-export const getUsers = catchAsync(async (req, res, next) => {
+export const getUsers = catchAsync(async (_req, res, _next) => {
   const users = await db.select().from(user);
   await wait(2000);
   return res.json({ data: users, status: 200, success: true });

@@ -7,7 +7,6 @@ type Props = {};
 
 const ServerPage = async (props: Props) => {
   const isAuthenticated = await getCookieUser();
-  console.log(isAuthenticated, "isAuthenticatioin");
   if (!isAuthenticated?.id) {
     return redirect("/login");
   }

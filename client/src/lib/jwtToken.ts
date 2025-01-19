@@ -6,11 +6,20 @@ type IJwtTokenData = {
   expiresIn?: string;
   [key: string]: any;
 };
-export const getCookiesOptions = (cookies: Record<string, any> = {}) => {
+const getCookieTime = (expiresIn: number = 1) => {
+  const expireIn = expiresIn * 24 * 60 + 1;
+  return new Date(Date.now() + expireIn * 60 * 1000);
+};
+export const getCookiesOptions = (props?: {
+  cookies?: Record<string, any>;
+  expiresIn?: number;
+}) => {
+  const { cookies, expiresIn = JWT_COOKIE_EXPIRES_IN } = props || {
+    expiresIn: JWT_COOKIE_EXPIRES_IN,
+    cookies: {},
+  };
   const updatedCookies = { ...cookies };
-  updatedCookies.expires =
-    updatedCookies.expires ||
-    new Date(Date.now() + JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000);
+  updatedCookies.expires = updatedCookies.expires || getCookieTime(expiresIn);
   updatedCookies.httpOnly = updatedCookies.httpOnly || true;
   updatedCookies.sameSite = updatedCookies.sameSite || "lax";
   updatedCookies.path = updatedCookies.path || "/";
@@ -44,11 +53,15 @@ export async function verifyJwt(token: string | null | undefined) {
 export async function jwtSignToken(props: IJwtTokenData) {
   const { expiresIn = JWT_EXPIRES_IN, ...rest } = props;
   const secret = new TextEncoder().encode(JWT_SECRET);
-  return await new jose.SignJWT({ ...rest })
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(secret);
+  try {
+    return await new jose.SignJWT({ ...rest })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuedAt()
+      .setExpirationTime(expiresIn)
+      .sign(secret);
+  } catch (error) {
+    return null;
+  }
 }
 type IPayload = {
   id: string;
@@ -60,17 +73,20 @@ export const createToken = async (tokenData: {
   id: string;
   [key: string]: any;
 }) => {
-  const token = await jwtSignToken({ ...tokenData, expiresIn: "30m" });
-  const cookieOptions: ICookieOptions = getCookiesOptions();
-  const refreshToken = await jwtSignToken({ ...tokenData, expiresIn: "90d" });
+  const token = await jwtSignToken({ ...tokenData, expiresIn: "1d" });
+  const token_attributes: ICookieOptions = getCookiesOptions({ expiresIn: 1 }); // 1 day 1 minutes;
+  const refresh_attributes: ICookieOptions = getCookiesOptions({
+    expiresIn: JWT_COOKIE_EXPIRES_IN,
+  }); // 7 days 1 minutes;
+  const refreshToken = await jwtSignToken({
+    ...tokenData,
+    expiresIn: JWT_EXPIRES_IN,
+  }); // 7d
   return {
     token,
-    refresh_attributes: cookieOptions,
+    refresh_attributes,
     refreshToken,
-    token_attributes: {
-      ...cookieOptions,
-      expires: new Date(Date.now() + 60 * 3000),
-    },
+    token_attributes,
   };
 };
 
@@ -98,15 +114,14 @@ export const verifyAndCreateToken = async (
         refresh_attributes,
         refreshToken: refToken,
         token,
-      } = await createToken(data as any);
+      } = await createToken(data);
       response = {
-        user: data as any,
+        user: data,
         data: {
           token_attributes,
           refresh_attributes,
           refreshToken: refToken,
           token,
-          isRefreshed: true,
         },
       };
     } else {
@@ -114,6 +129,7 @@ export const verifyAndCreateToken = async (
         data: null,
         user: tokenData?.data as any,
       };
+      0;
     }
     return response;
   } catch (e) {}

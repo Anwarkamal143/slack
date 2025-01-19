@@ -10,7 +10,7 @@ import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
 import { response } from "@/utils/requestResponse";
 import { getArcticeMethods, googleAuth } from "@/utils/socialauth";
-import { OAuth2Tokens } from "arctic";
+
 import { CookieOptions, Response } from "express";
 const googleCookies = {
   google_oauth_state: "google_oauth_state",
@@ -23,7 +23,7 @@ const Googlge_Cookies_options: CookieOptions = {
   maxAge: 600 * 1000,
   secure: process.env.NODE_ENV === "production",
 };
-export const googleSignAuth = catchAsync(async (req, res, next) => {
+export const googleSignAuth = catchAsync(async (_req, res, next) => {
   try {
     const gCS = await getArcticeMethods();
     const state = gCS.generateState();
@@ -75,10 +75,9 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
   try {
     const gAuth = await googleAuth();
     gAuth.createAuthorizationURL(state, codeVerifier, ["profile", "email"]);
-    const tokens: OAuth2Tokens = await gAuth.validateAuthorizationCode(
-      code,
-      codeVerifier
-    );
+    const gCS = await getArcticeMethods();
+    const tokens: typeof gCS.OAuth2Tokens =
+      await gAuth.validateAuthorizationCode(code, codeVerifier);
     const { decodeIdToken } = await getArcticeMethods();
     // const accessToken: any = tokens.accessToken();
 
@@ -95,7 +94,7 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
     const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
     if (existingAccount) {
       const user = await getUserById(existingAccount.userId);
-      setCallbackCookie(res, {
+      await setCallbackCookie(res, {
         id: existingAccount.userId,
         provider: AccountType.oauth,
         providerType: ProviderType.google,
@@ -106,7 +105,7 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
 
     const user = await createGoogleUserUseCase(googleUser);
 
-    setCallbackCookie(res, {
+    await setCallbackCookie(res, {
       id: user.id,
       provider: AccountType.oauth,
       providerType: ProviderType.google,
@@ -118,17 +117,19 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
     next(new AppError("Error on callback" + e, 400));
   }
 });
-const setCallbackCookie = (
+const setCallbackCookie = async (
   res: Response,
   tokenData: { id: string } & Record<string, any>
 ) => {
-  setCookies(res, tokenData);
+  await setCookies(res, tokenData);
   res.cookie(googleCookies.google_code_verifier, "", {
     ...Googlge_Cookies_options,
     maxAge: 0,
+    expires: new Date(Date.now() - 2 * 60 * 1000),
   });
   res.cookie(googleCookies.google_oauth_state, "", {
     ...Googlge_Cookies_options,
     maxAge: 0,
+    expires: new Date(Date.now() - 2 * 60 * 1000),
   });
 };

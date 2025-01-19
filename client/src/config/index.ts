@@ -8,9 +8,9 @@ export const IS_ENVIRONMENT_PRODUCTION = process.env.NODE_ENV === "production";
 export const JWT_SECRET =
   process.env.JWT_SECRET || "xLDL9bqmNO=PI9Q5O`+#GnGFTukFKl";
 
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "90d";
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 export const JWT_COOKIE_EXPIRES_IN = Number(
-  process.env.JWT_COOKIE_EXPIRES_IN || "90"
+  process.env.JWT_COOKIE_EXPIRES_IN || "7"
 );
 export const COOKIE_NAME = process.env.COOKIE_NAME || "slack_jwt";
 export const REFRESH_COOKIE_NAME =
