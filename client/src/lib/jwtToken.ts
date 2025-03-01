@@ -40,14 +40,21 @@ export async function verifyJwt(token: string | null | undefined) {
     const token_data = await jose.jwtVerify(token, secret);
     const { payload } = token_data;
     const { iat, exp, ...rest } = payload;
+    if (payload.exp) {
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      const isExpired = payload.exp < currentTime;
+      if (isExpired) {
+        // throw new Error("Token has expired");
+        return null;
+      }
+    }
     return { token_data: payload, data: rest as IServerCookieType };
   } catch (error: any) {
     console.log({ error });
-    // const message = error.message;
-    // if (message && message.toLowerCase().indexOf("jwt expired") != -1) {
-    //   return JWT_MESSAGES.jwt_expired;
-    // }
-    return null;
+    if (error instanceof jose.errors.JWTExpired) {
+      return null;
+    }
+    throw error;
   }
 }
 export async function jwtSignToken(props: IJwtTokenData) {
@@ -83,7 +90,7 @@ export const createToken = async (tokenData: {
     expiresIn: JWT_EXPIRES_IN,
   }); // 7d
   return {
-    token,
+    accessToken: token,
     refresh_attributes,
     refreshToken,
     token_attributes,
@@ -113,7 +120,7 @@ export const verifyAndCreateToken = async (
         token_attributes,
         refresh_attributes,
         refreshToken: refToken,
-        token,
+        accessToken,
       } = await createToken(data);
       response = {
         user: data,
@@ -121,7 +128,7 @@ export const verifyAndCreateToken = async (
           token_attributes,
           refresh_attributes,
           refreshToken: refToken,
-          token,
+          accessToken,
         },
       };
     } else {

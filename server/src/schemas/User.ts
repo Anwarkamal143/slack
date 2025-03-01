@@ -1,7 +1,6 @@
 import { accounts, user } from "@/db/schema";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
 export const RegisterUserSchema = createInsertSchema(user, {
   email: z
     .string()

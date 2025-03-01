@@ -4,7 +4,7 @@ import {
   getAccountByGoogleIdUseCase,
   getUserById,
 } from "@/data-access/users";
-import { AccountType, ProviderType } from "@/db/schema";
+import { AccountType, ProviderType } from "@/db";
 import { setCookies } from "@/utils";
 import AppError from "@/utils/appError";
 import catchAsync from "@/utils/catchAsync";
@@ -69,7 +69,7 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
     state !== storedState ||
     !codeVerifier
   ) {
-    return next(new AppError("Error on callback11", 400));
+    return next(new AppError("Error on callback", 400));
   }
 
   try {
@@ -91,35 +91,38 @@ export const googleAuthCallback = catchAsync(async (req, res, next) => {
     // );
     // const googleUser = (await response.json()) as IGoogleUser;
     const googleUser = decodeIdToken(tokens.idToken());
-    const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
+    const { data: existingAccount } = await getAccountByGoogleIdUseCase(
+      googleUser.sub
+    );
     if (existingAccount) {
-      const user = await getUserById(existingAccount.userId);
+      const { data: user } = await getUserById(existingAccount.userId);
       await setCallbackCookie(res, {
         id: existingAccount.userId,
         provider: AccountType.oauth,
         providerType: ProviderType.google,
-        role: user.user?.role,
+        role: user?.role,
       });
       return res.status(302).redirect(AFTER_LOGIN_URL);
     }
 
-    const user = await createGoogleUserUseCase(googleUser);
-
-    await setCallbackCookie(res, {
-      id: user.id,
-      provider: AccountType.oauth,
-      providerType: ProviderType.google,
-      role: user.role,
-    });
+    const { data: user } = await createGoogleUserUseCase(googleUser);
+    if (user) {
+      await setCallbackCookie(res, {
+        id: user.id,
+        provider: AccountType.oauth,
+        providerType: ProviderType.google,
+        role: user.role,
+      });
+    }
 
     return res.status(302).redirect(AFTER_LOGIN_URL);
   } catch (e: any) {
-    next(new AppError("Error on callback" + e, 400));
+    next(new AppError("Error on callback: " + e, 400));
   }
 });
 const setCallbackCookie = async (
   res: Response,
-  tokenData: { id: string } & Record<string, any>
+  tokenData: { id: number } & Record<string, any>
 ) => {
   await setCookies(res, tokenData);
   res.cookie(googleCookies.google_code_verifier, "", {

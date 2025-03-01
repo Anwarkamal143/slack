@@ -1,7 +1,14 @@
 "use client";
-import { ISocketContextProps, socket, SocketContext } from "@/context/socket";
+import { SOCKET_URL } from "@/config";
+import { ISocketContextProps, SocketContext } from "@/context/socket";
+import { useRefreshStoreGetTokens } from "@/store/useRefreshTokens";
+import { useUserStoreIsAuthenticated } from "@/store/userUserStore";
 import { ReactNode, useEffect, useState } from "react";
-
+import { connect } from "socket.io-client";
+export const socket = connect(SOCKET_URL, {
+  // withCredentials: true,
+  autoConnect: false,
+});
 export default function SocketContextProvider({
   children,
 }: {
@@ -9,6 +16,8 @@ export default function SocketContextProvider({
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
+  const isAuthenticated = useUserStoreIsAuthenticated();
+  const tokens = useRefreshStoreGetTokens();
 
   function onConnect() {
     setIsConnected(true);
@@ -26,6 +35,10 @@ export default function SocketContextProvider({
     if (socket?.connected) {
       onConnect();
     }
+    if (socket?.disconnected && isAuthenticated && tokens.accessToken) {
+      socket.auth = { token: tokens.accessToken };
+      socket.connect();
+    }
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
@@ -34,17 +47,14 @@ export default function SocketContextProvider({
       socket.off("disconnect", onDisconnect);
       socket.disconnect();
     };
-  }, []);
+  }, [isAuthenticated, tokens.isRefreshing]);
 
   return (
     <SocketContext.Provider
       value={
         {
           socket,
-          disconnect: socket.disconnect,
           isConnected,
-          send: socket.emit,
-          subscribe: socket.on,
         } as ISocketContextProps
       }
     >

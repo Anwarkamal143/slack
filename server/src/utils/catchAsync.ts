@@ -1,4 +1,4 @@
-import { IRequest } from "@/types/express";
+import { IRequest } from "@/@types/express";
 import { NextFunction, Response } from "express";
 
 export default function <T>(

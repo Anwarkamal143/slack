@@ -12,10 +12,9 @@ export const getUser_AccountByEmail = async (email: string) => {
       with: {
         accounts: {
           columns: {
-            accessToken:false,
-            refreshToken:false,
-            password:true
-          }
+            accessToken: false,
+            refreshToken: false,
+          },
         },
       },
     });

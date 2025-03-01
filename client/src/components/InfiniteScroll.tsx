@@ -19,7 +19,7 @@ export default function InfiniteScroll({
   loader,
   dipatchScroll,
 }: IInfinteScrollProps) {
-  let mainWrapperRef = useRef<any>();
+  let mainWrapperRef = useRef<any>(null);
 
   const triggerScroll = useCallback((mainWrapperRef: any) => {
     if (

@@ -1,5 +1,5 @@
 "use client";
-import useUserStore from "@/store/userStore";
+import { useUserStoreIsAuthenticated } from "@/store/userUserStore";
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 type Props = {
@@ -10,7 +10,7 @@ export default function AuthProvider(props: Props) {
   const { children } = props;
 
   const router = useRouter();
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const isAuthenticated = useUserStoreIsAuthenticated();
 
   useEffect(() => {
     if (!isAuthenticated) {

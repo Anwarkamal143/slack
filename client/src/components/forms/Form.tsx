@@ -11,7 +11,6 @@ interface FormProps<T extends FieldValues = any>
   form: UseFormReturn<T>;
   onSubmit: SubmitHandler<T>;
   className?: string;
-  fieldSetclassName?: string;
 }
 
 const Form = <T extends FieldValues>({
@@ -19,7 +18,6 @@ const Form = <T extends FieldValues>({
   onSubmit,
   children,
   ref,
-  fieldSetclassName,
   className,
   ...props
 }: FormProps<T>) => {
@@ -29,10 +27,11 @@ const Form = <T extends FieldValues>({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         {...props}
-        className={cn("bg-transparent", className)}
+        className={cn("bg-transparent border-none outline-none", className)}
         ref={ref as any}
+        aria-disabled={form.formState.isSubmitting}
       >
-        <fieldset
+        {/* <fieldset
           //   We disable form inputs when we are submitting the form!! A tiny detail
           //        that is missed a lot of times
           className={cn(
@@ -40,9 +39,14 @@ const Form = <T extends FieldValues>({
             fieldSetclassName
           )}
           disabled={form.formState.isSubmitting}
-        >
-          {children}
-        </fieldset>
+        > */}
+        {children}
+        {/* {React.Children.map(children, (child: any) => {
+          return React.cloneElement(child, {
+            disabled: form.formState.isSubmitting,
+          });
+        })} */}
+        {/* </fieldset> */}
       </form>
     </Rform>
   );

@@ -1,7 +1,7 @@
 import { COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/constants";
 import { createAccount } from "@/data-access/accounts";
 import { createUser, getUserByEmail, getUserById } from "@/data-access/users";
-import { AccountType, ProviderType } from "@/db/schema";
+import { AccountType, ProviderType } from "@/db";
 import { RegisterUserSchema } from "@/schemas/User";
 import {
   compareArgonHash,
@@ -20,19 +20,23 @@ export const signUp = catchAsync(async (req, res, next) => {
   if (!result.success) {
     return next(new AppError(result.error?.errors[0].message, 400));
   }
-  const existingUser = await getUserByEmail(result.data.email);
-  if (existingUser.user) {
+  const { data: existingUser } = await getUserByEmail(result.data.email);
+  if (existingUser) {
     return next(new AppError("Email already in use!", 400));
   }
   try {
     const hashedPassword = await createArgonHash(pas);
-    const user = await createUser({ email, password: hashedPassword, name });
+    const { data: user } = await createUser({
+      email,
+      password: hashedPassword,
+      name,
+    });
     if (!user?.id) {
       return next(new AppError("Registratin Fail", 401));
     }
     await createAccount(user.id);
 
-    setCookies(res, {
+    const { accessToken, refreshToken } = await setCookies(res, {
       id: user.id,
       providerType: ProviderType.email,
       role: user.role,
@@ -42,7 +46,7 @@ export const signUp = catchAsync(async (req, res, next) => {
     const { password, ...restUser } = user;
     return response(res, {
       message: "Account created successfully!",
-      data: restUser,
+      data: { ...restUser, accessToken, refreshToken },
       statusCode: 201,
     });
   } catch (error) {
@@ -54,12 +58,12 @@ export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const resUser = await getUserByEmail(email);
+    const { data: resUser } = await getUserByEmail(email);
 
-    if (!resUser?.user) {
+    if (!resUser) {
       return next(new AppError("Invalid Credentails", 400));
     }
-    const user = resUser.user;
+    const user = resUser;
     if (!user?.password) {
       return next(new AppError("Invalid Credentails", 400));
     }
@@ -68,7 +72,7 @@ export const login = catchAsync(async (req, res, next) => {
       return next(new AppError("Invalid Credentails", 400));
     }
 
-    setCookies(res, {
+    const { accessToken, refreshToken } = await setCookies(res, {
       id: user.id,
       providerType: ProviderType.email,
       role: user.role,
@@ -78,7 +82,7 @@ export const login = catchAsync(async (req, res, next) => {
     const { password: psd, ...restUser } = user;
     return response(res, {
       message: "LoggedIn successfully",
-      data: restUser,
+      data: { ...restUser, accessToken, refreshToken },
     });
   } catch (error) {
     return next(new AppError("Something went wrong", 500));
@@ -119,9 +123,9 @@ export const refreshTokens = catchAsync(async (req, res, next) => {
     }
   }
   const { data } = tokenData;
-  const user = await getUserById(data.id);
+  const { data: user } = await getUserById(data.id);
 
-  if (!user.user?.id) {
+  if (user?.id) {
     resetCookies(res);
     return response(res, {
       statusCode: 200,
@@ -130,10 +134,13 @@ export const refreshTokens = catchAsync(async (req, res, next) => {
     });
   }
 
-  setCookies(res, data);
+  const { accessToken, refreshToken: refreshTokenTosend } = await setCookies(
+    res,
+    data
+  );
   return response(res, {
     statusCode: 200,
     message: "Token refreshed",
-    data: null,
+    data: { accessToken, refreshToken: refreshTokenTosend },
   });
 });

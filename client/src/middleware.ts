@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser } from "./api/auth";
+
 import { COOKIE_NAME, REFRESH_COOKIE_NAME } from "./config";
+import { getAuthUser } from "./features/auth/api";
 import { verifyAndCreateToken } from "./lib/jwtToken";
 
 // This function can be marked `async` if using `await` inside
@@ -69,7 +70,7 @@ async function verifyAndCreateAuthTokens(
         token_attributes,
         refresh_attributes,
         refreshToken: refToken,
-        token: nToken,
+        accessToken: nToken,
       } = response.data;
       const user = await getAuthUser(nToken);
 

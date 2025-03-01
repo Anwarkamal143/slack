@@ -1,5 +1,5 @@
-import { Toaster } from "@/components/ui/sonner";
 import AppProvider from "@/providers/AppProvider";
+import QueryProvider from "@/providers/QueryProvider";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -16,8 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className="" suppressHydrationWarning={true}>
-        <AppProvider>{children}</AppProvider>
-        <Toaster richColors />
+        <QueryProvider>
+          <AppProvider>{children}</AppProvider>
+        </QueryProvider>
       </body>
     </html>
   );

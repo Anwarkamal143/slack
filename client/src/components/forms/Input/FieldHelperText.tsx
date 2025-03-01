@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { ReactNode } from "react";
+import { useFormContext } from "react-hook-form";
 
 function FieldHelpetText({
   name,
@@ -23,6 +23,10 @@ function FieldHelpetText({
 
   if (error) return null;
 
-  return <span className={`field-helper-text ${className}`}>{helperText}</span>;
+  return (
+    <span className={`field-helper-text text-xs ${className}`}>
+      {helperText}
+    </span>
+  );
 }
 export default FieldHelpetText;

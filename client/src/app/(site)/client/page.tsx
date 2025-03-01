@@ -1,10 +1,10 @@
 "use client";
 import UserButton from "@/components/user-button";
-import useUserStore from "@/store/userStore";
+import { useUserStoreStoreUser } from "@/store/userUserStore";
 type Props = {};
 
 const DashboardPage = (props: Props) => {
-  const user = useUserStore((state) => state.user);
+  const user = useUserStoreStoreUser();
 
   return (
     <div className="h-full flex flex-col space-y-3 items-center justify-center bg-gray-100">

@@ -8,6 +8,7 @@ type IResponseType = {
   success?: true | false;
   statusCode?: StatusCodeNumbers;
   status?: "success" | "fail" | "error";
+  [Key: string]: any;
 };
 export const response = (res: Response, props: IResponseType) => {
   const {
@@ -16,6 +17,7 @@ export const response = (res: Response, props: IResponseType) => {
     success = true,
     statusCode = 200,
     status = "success",
+    ...rest
   } = props;
   return res.status(statusCode).json({
     message,
@@ -23,5 +25,6 @@ export const response = (res: Response, props: IResponseType) => {
     data,
     status,
     time: toUTC(new Date()),
+    ...rest,
   });
 };

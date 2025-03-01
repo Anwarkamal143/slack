@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 type IUserActions = {
   reset: () => void;
@@ -10,13 +11,21 @@ export const resetAllStores = () => {
     resetFn();
   });
 };
-const useUserStore = create<IUserActions>()((set) => ({
-  ...INITIAL_STATE,
+const useGlobalStore = create<IUserActions>()(
+  immer((set) => {
+    storeResetFns.add(() => set(INITIAL_STATE));
+    return {
+      ...INITIAL_STATE,
 
-  reset() {
-    set({ ...INITIAL_STATE });
-    storeResetFns.add(() => set({ ...INITIAL_STATE }));
-  },
-}));
+      reset() {
+        set(INITIAL_STATE);
+      },
+    };
+  })
+);
 
-export default useUserStore;
+export default useGlobalStore;
+
+export const useGlobalStoreActions = () => ({
+  reset: useGlobalStore((state) => state.reset),
+});

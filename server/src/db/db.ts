@@ -6,15 +6,16 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { DB_URL } from "../constants";
 import { cLog } from "./consoleLogs";
-import * as relations from "./relations";
+
 import * as schema from "./schema";
+
 // dbenv.config({ path: ".env.local" });
 export * from "drizzle-orm";
 
 const client = postgres(DB_URL);
 
 export const db = drizzle(client, {
-  schema: { ...schema, ...relations },
+  schema,
 });
 
 const migrationClient = postgres(DB_URL, { max: 1 });

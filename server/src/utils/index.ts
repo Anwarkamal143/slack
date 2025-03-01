@@ -1,12 +1,13 @@
+import { IServerCookieType } from "@/@types/cookie";
 import {
   COOKIE_NAME,
   getCookiesOptions,
   JWT_COOKIE_EXPIRES_IN,
   JWT_EXPIRES_IN,
   JWT_SECRET,
+  REDIS_PREFIX,
   REFRESH_COOKIE_NAME,
 } from "@/constants";
-import { IServerCookieType } from "@/types/cookie";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { CookieOptions, Response } from "express";
@@ -50,17 +51,11 @@ export function generateUUID() {
   return uuid;
 }
 type IJwtTokenData = {
-  id: string;
+  id: number;
   expiresIn?: string;
   [key: string]: any;
 };
-// export function jwtSignToken(props: IJwtTokenData) {
-//   const { id, expiresIn = JWT_EXPIRES_IN, ...rest } = props;
-//   return jwt.sign({ id, ...rest }, JWT_SECRET, {
-//     expiresIn: expiresIn,
-//     // expiresIn: "10s",
-//   });
-// }
+
 export async function jwtSignToken(props: IJwtTokenData) {
   const { expiresIn = JWT_EXPIRES_IN, ...rest } = props;
   const secret = new TextEncoder().encode(JWT_SECRET);
@@ -70,15 +65,9 @@ export async function jwtSignToken(props: IJwtTokenData) {
     .setExpirationTime(expiresIn)
     .sign(secret);
 }
-// export const createToken = (tokenData: { id: string; [key: string]: any }) => {
-//   const token = jwtSignToken({ ...tokenData, expiresIn: "2m" });
-//   const cookieOptions: CookieOptions = getCookiesOptions();
-//   const refreshToken = jwtSignToken({ ...tokenData });
-//   return { token, attributes: cookieOptions, refreshToken };
-// };
 
 export const createToken = async (tokenData: {
-  id: string;
+  id: number;
   [key: string]: any;
 }) => {
   const token = await jwtSignToken({ ...tokenData, expiresIn: "1d" });
@@ -91,7 +80,7 @@ export const createToken = async (tokenData: {
     expiresIn: JWT_EXPIRES_IN,
   });
   return {
-    token,
+    accessToken: token,
     refresh_attributes,
     refreshToken,
     token_attributes,
@@ -153,25 +142,33 @@ export async function verifyJwt(token: string | null | undefined) {
     const token_data = await jose.jwtVerify(token, secret);
     const { payload } = token_data;
     const { iat, exp, ...rest } = payload;
+    if (payload.exp) {
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      const isExpired = payload.exp < currentTime;
+      if (isExpired) {
+        // throw new Error("Token has expired");
+        return null;
+      }
+    }
     return { token_data: payload, data: rest as IServerCookieType };
   } catch (error: any) {
     console.log({ error });
-    // const message = error.message;
-    // if (message && message.toLowerCase().indexOf("jwt expired") != -1) {
-    //   return JWT_MESSAGES.jwt_expired;
-    // }
-    return null;
+    if (error instanceof jose.errors.JWTExpired) {
+      return null;
+    }
+    throw error;
   }
 }
 export const setCookies = async (
   res: Response,
-  tokenData: { id: string } & Record<string, any>
+  tokenData: { id: number } & Record<string, any>
 ) => {
-  const { token_attributes, token, refreshToken, refresh_attributes } =
+  const { token_attributes, accessToken, refreshToken, refresh_attributes } =
     await createToken(tokenData);
 
-  res.cookie(COOKIE_NAME, token, token_attributes);
+  res.cookie(COOKIE_NAME, accessToken, token_attributes);
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refresh_attributes);
+  return { accessToken, refreshToken };
 };
 export const resetCookies = (res: Response) => {
   const expires = new Date(Date.now() - 2 * 60 * 1000);
@@ -187,4 +184,27 @@ export const resetCookies = (res: Response) => {
     }),
     maxAge: 0,
   });
+};
+
+type Check<T> = [T] extends [number] ? number : null;
+export function safeParseInt<T extends number | null = number>(
+  str: string | number | undefined,
+  // @ts-ignore
+  defaultValue: T = null
+) {
+  if (str === null || str === undefined) return defaultValue as Check<T>;
+  if (typeof str !== "string" && typeof str !== "number")
+    return defaultValue as Check<T>;
+
+  try {
+    const trimmed = String(str).trim(); // Convert to string & trim spaces
+    if (!/^-?\d+$/.test(trimmed)) return defaultValue as Check<T>; // Ensure it's a valid integer string
+    return parseInt(trimmed) as number;
+  } catch {
+    return defaultValue as Check<T>;
+  }
+}
+
+export const createRedisKey = (key: string) => {
+  return `${REDIS_PREFIX}_${key}`;
 };

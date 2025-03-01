@@ -1,38 +1,72 @@
+import { IGoogleUser } from "@/@types/ISocial";
 import { db, eq } from "@/db/db";
-import { ProviderType, user as users } from "@/db/schema";
+import { user as users } from "@/db/schema";
 import { IUser } from "@/schemas/User";
-import { IGoogleUser } from "@/types/ISocial";
 import { createAccountViaGoogle } from "./accounts";
 
 import { getAccountByProviderId } from "@/data-access/accounts";
+import { ProviderType } from "@/db";
 import { toUTC } from "@/utils/dateUtils";
+import { STATUS_CODES } from "@/utils/ErrorsUtil";
 
 export async function createUser(
   data: { email: string; name: string } & Partial<Omit<IUser, "email">>
 ) {
-  const [user] = await db
-    .insert(users)
-    .values({
-      ...data,
-    })
-    .returning();
-  return user;
+  try {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...data,
+      })
+      .returning();
+    if (!user) {
+      return {
+        data: null,
+        error: "User not created",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
+    }
+    return { data: user, status: STATUS_CODES.OK, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: "Internal server error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
+  }
 }
 export async function createGoogleUserUseCase(googleUser: IGoogleUser) {
-  let existingUser = await getUserByEmail(googleUser.email);
+  try {
+    let existingUser = await getUserByEmail(googleUser.email);
+    let user = existingUser.data;
+    if (!user) {
+      const { data } = await createUser({
+        email: googleUser.email,
+        emailVerified: toUTC(new Date(), false),
+        name: googleUser.name,
+        image: googleUser.picture,
+      });
+      user = data;
+    }
+    // const user = existingUser.user;
+    if (!user) {
+      return {
+        data: null,
+        error: "User not created",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
+    }
 
-  if (!existingUser?.user) {
-    existingUser.user = await createUser({
-      email: googleUser.email,
-      emailVerified: toUTC(new Date(), false),
-      name: googleUser.name,
-      image: googleUser.picture,
-    });
+    await createAccountViaGoogle(user.id, googleUser.sub);
+
+    return { data: user, status: STATUS_CODES.OK, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      error: "Internal server error",
+    };
   }
-  const user = existingUser.user;
-  await createAccountViaGoogle(user.id, googleUser.sub);
-
-  return user;
 }
 
 export async function getAccountByGoogleIdUseCase(googleId: string) {
@@ -45,34 +79,75 @@ export async function getAccountByGithubIdUseCase(githubId: string) {
 
 export const getUserByEmail = async (email: string) => {
   try {
+    if (!email) {
+      return {
+        data: null,
+        error: "Email is required",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
+    }
     const user = await db.query.user.findFirst({
       where: (fields) => eq(fields.email, email),
     });
-
-    return { user: user, error: null };
+    if (!user) {
+      return {
+        data: null,
+        error: "User not found",
+        status: STATUS_CODES.NOT_FOUND,
+      };
+    }
+    return { data: user, error: null, status: STATUS_CODES.OK };
   } catch (e) {
     console.log("getUserByEmail Error", e);
-    return { user: null, error: e };
+    return {
+      data: null,
+      error: "Internal server error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
   }
 };
 
-export const getUserById = async (id: string) => {
+export const getUserById = async (id: number) => {
   try {
+    if (!id) {
+      return {
+        data: null,
+        error: "User Id is required",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
+    }
     const user = await db.query.user.findFirst({
       where: (fields) => eq(fields.id, id),
       // where: (fields, { eq }) => {
       //   return eq(fields.id, id);
       // },
     });
-
-    return { user, error: null };
+    if (!user) {
+      return {
+        data: null,
+        error: "User not found",
+        status: STATUS_CODES.NOT_FOUND,
+      };
+    }
+    return { data: user, error: null, status: STATUS_CODES.OK };
   } catch (e) {
     console.log("getUserById Error", e);
-    return { user: null, error: e };
+    return {
+      data: null,
+      error: "Internal server error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
   }
 };
-export const getUser_Profile_Account_ById = async (id: string) => {
+export const getUser_Profile_Account_ById = async (id: number) => {
   try {
+    if (!id) {
+      return {
+        data: null,
+        error: "User Id is required",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
+    }
     const user = await db.query.user.findFirst({
       where: (fields) => eq(fields.id, id),
 
@@ -92,33 +167,51 @@ export const getUser_Profile_Account_ById = async (id: string) => {
         },
       },
     });
-
-    return { user, error: null };
+    if (!user) {
+      return {
+        data: null,
+        error: "User not found",
+        status: STATUS_CODES.NOT_FOUND,
+      };
+    }
+    return { data: user, error: null, status: STATUS_CODES.OK };
   } catch (e) {
-    return { user: null, error: e };
+    return {
+      data: null,
+      error: "Internal server error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
   }
 };
 export const updateUserById = async (data: Partial<IUser>) => {
   try {
     if (!data.id) {
-      return null;
+      return {
+        data: null,
+        error: "User Id is required",
+        status: STATUS_CODES.BAD_REQUEST,
+      };
     }
-    const updatedUser = await db
+    const [user] = await db
       .update(users)
       .set(data)
       .where(eq(users.id, data.id))
       .returning();
-    if (!updatedUser?.[0]) {
+    if (!user) {
       return {
-        user: null,
-        error: new Error("Error occured while updating the record!"),
+        data: null,
+        error: "User not updated",
+        status: STATUS_CODES.BAD_REQUEST,
       };
     }
-    const responseUsers = updatedUser[0];
 
-    return { user: responseUsers, error: null };
+    return { data: user, status: STATUS_CODES.OK, error: null };
   } catch (e) {
     console.log("updateUser Error", e);
-    return { user: null, error: e };
+    return {
+      data: null,
+      error: "Internal server error",
+      status: STATUS_CODES.BAD_REQUEST,
+    };
   }
 };

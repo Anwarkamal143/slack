@@ -17,14 +17,14 @@ export const getUserAccountAndProfile = catchAsync(async (req, res, next) => {
     return next(new AppError("User does not exist!", 404));
   }
   try {
-    const user = await getUser_Profile_Account_ById(reqUser.id);
-    if (user.error) {
+    const { data: user } = await getUser_Profile_Account_ById(reqUser.id);
+    if (!user) {
       return next(new AppError("User does not exist!", 404));
     }
 
     return response(res, {
       message: "success",
-      data: user.user,
+      data: user,
     });
   } catch {
     return next(new AppError("User does not exist!", 404));
@@ -33,8 +33,12 @@ export const getUserAccountAndProfile = catchAsync(async (req, res, next) => {
 
 export const getUserByID = catchAsync(async (req, res, next) => {
   try {
-    const id = req.params.id;
-    const { user } = await getUserById(id);
+    const id = req.params.id as string;
+    if (!id) {
+      return next(new AppError("ID is required!", 404));
+    }
+    const userId = parseInt(id);
+    const { data: user } = await getUserById(userId);
     if (!user) {
       return next(new AppError("User does not exist!", 404));
     }

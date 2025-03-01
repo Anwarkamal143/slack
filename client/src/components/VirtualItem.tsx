@@ -1,5 +1,11 @@
 import { cn } from "@/lib/utils";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 type Props = {
   /**
    * Whether the element should be visible initially or not.
@@ -20,7 +26,7 @@ type Props = {
   /** E.g. 'span', 'tr'. Default = 'div' */
   placeholderElement?: string;
   placeholderElementClass?: string;
-  children: React.ReactElement;
+  children: ReactElement;
   id?: string;
 };
 
@@ -109,7 +115,8 @@ const VirtualItem = ({
       isVisible || (stayRendered && wasVisible.current) ? (
         <div ref={localItemRef}>
           {React.cloneElement(children, {
-            ...children.props,
+            // eslint-disable-next-line
+            ...(children.props as any),
             reCalcHeight,
           })}
         </div>

@@ -40,7 +40,7 @@ const baseURL = API_POOL["public-1"];
 
 const TOKEN_PAYLOAD_KEY = "authorization";
 
-interface IAxiosRequest extends Partial<AxiosRequestConfig> {
+export interface IAxiosRequest extends Partial<AxiosRequestConfig> {
   public?: boolean;
   handleError?: boolean;
   attachToken?: boolean;

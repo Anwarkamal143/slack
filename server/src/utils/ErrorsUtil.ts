@@ -1,7 +1,5 @@
 // src/utils/statusCodes.ts
 
-import { Response } from "express";
-
 export const STATUS_CODES = {
   // Success Codes
   OK: 200,
@@ -32,8 +30,8 @@ export const STATUS_CODES = {
 export type StatusCode = keyof typeof STATUS_CODES;
 export type StatusCodeNumbers =
   (typeof STATUS_CODES)[keyof typeof STATUS_CODES];
-export const createResponse = (
-  res: Response,
-  status: StatusCode,
-  message: String | string[] | Object
-) => {};
+// export const createResponse = (
+//   res: Response,
+//   status: StatusCode,
+//   message: String | string[] | Object
+// ) => {};

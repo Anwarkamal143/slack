@@ -1,6 +1,8 @@
 "use client";
+import Modals from "@/components/Modals";
 import useFetchUser from "@/hooks/useFetchUser";
 import { ReactNode, Suspense } from "react";
+import { Toaster } from "sonner";
 import PageLoader from "../components/loader";
 import SocketContextProvider from "./SocketProvider";
 type Props = {
@@ -20,7 +22,9 @@ export default function AppProvider(props: Props) {
 
   return (
     <SocketContextProvider>
+      <Modals />
       <Suspense fallback={<PageLoader />}>{children}</Suspense>
+      <Toaster richColors />
     </SocketContextProvider>
   );
 }

@@ -1,3 +1,5 @@
+import { safeParseInt } from "./utils";
+
 export const DB_URL = process.env.DB_URL || "";
 export const PORT = process.env.PORT || 4000;
 export const JWT_SECRET =
@@ -17,7 +19,13 @@ export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 export const HOST_NAME = process.env.HOST_NAME || "";
 
 export const AFTER_LOGIN_URL = process.env.APP_URL || "";
-
+export const REDIS_HOST = process.env.REDIS_HOST;
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+export const REDIS_TLS = process.env.REDIS_TLS === "true" || false;
+export const REDIS_USER = process.env.REDIS_USER || "default";
+export const REDIS_PORT = safeParseInt(process.env.REDIS_PORT, 6379);
+export const REDIS_PATH = process.env.REDIS_PATH;
+export const REDIS_PREFIX = process.env.REDIS_PREFIX || "slack";
 export const STRIPE_ENVS = {
   secretKey: process.env.STRIPE_SECRET_KEY,
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
@@ -183,3 +191,8 @@ export const nouns = [
   "Smoke",
   "Star",
 ];
+
+export const SOCKETS_KEYS = {
+  WORKSPACE_DELETED: `workspace_deleted`,
+  WORKSPACE_UPDATED: `workspace_updated`,
+};

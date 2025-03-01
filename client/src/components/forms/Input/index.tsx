@@ -18,6 +18,25 @@ import {
 } from "@/components/ui/form";
 import { Input, InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { cva, VariantProps } from "class-variance-authority";
+const IInputVariants = cva(
+  "border-transparent rounded-none border-solid border outline-none focus-visible:border-transparent px-0",
+  {
+    variants: {
+      variant: {
+        bottom:
+          "border-b border-b-input hover:border-b-inputActive focus-visible:border-b-inputActive focus:border-b-inputActive",
+        top: "border-t border-t-input hover:border-t-inputActive focus-visible:border-transparent focus-visible:border-t-inputActive  focus:border-t-inputActive",
+        right:
+          "border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive focus:border-r-inputActive",
+        left: "border-l border-l-input hover:border-l-inputActive focus-visible:border-l-inputActive focus:border-l-inputActive",
+      },
+    },
+    // defaultVariants: {
+    //   variant: "none",
+    // },
+  }
+);
 type IConRenderProps = {
   className?: string;
   onClick: (e: MouseEvent | TouchEvent) => void;
@@ -47,19 +66,13 @@ type InputFormProps = InputProps & {
   helperText?: ReactNode;
   leftIcon?: IconProps;
   rightIcon?: IconProps;
-  border?: "b" | "t" | "l" | "r";
+  border?: VariantProps<typeof IInputVariants>["variant"];
 };
 type GenericTextfieldProps<T extends FieldValues> = UseControllerProps<T> &
   InputFormProps;
 
 const ICON_COMMON_CLASSES = (extra: string) =>
   "h-[45%] absolute top-[50%]  translate-y-[-50%] pointer-events-none " + extra;
-const borderClasses = {
-  b: "border-transparent rounded-none border-solid border outline-none  border-b border-b-input hover:border-b-gray-300 focus-visible:border-b-gray-400 focus:border-b-gray-400 !ring-0 !ring-offset-0",
-  t: "border-transparent rounded-none border-solid border outline-none  border-t border-t-input hover:border-t-gray-300 focus-visible:border-t-gray-400 focus:border-t-gray-400 !ring-0 !ring-offset-0",
-  r: "border-transparent rounded-none border-solid border outline-none  border-r border-r-input hover:border-r-gray-300 focus-visible:border-r-gray-400 focus:border-r-gray-400 !ring-0 !ring-offset-0",
-  l: "border-transparent rounded-none border-solid border outline-none  border-l border-l-input hover:border-l-gray-300 focus-visible:border-l-gray-400 focus:border-l-gray-400 !ring-0 !ring-offset-0",
-} as const;
 const FormInput = <T extends FieldValues>(
   props: GenericTextfieldProps<T>,
   ref: Ref<HTMLInputElement>
@@ -69,7 +82,7 @@ const FormInput = <T extends FieldValues>(
     id,
     label,
     defaultValue,
-    disabled,
+    disabled = false,
     helperText,
     rightIcon,
     leftIcon,
@@ -77,9 +90,10 @@ const FormInput = <T extends FieldValues>(
     labelClass,
     type = "text",
     border,
+    onChange,
     ...rest
   } = props;
-  const borderClass = border ? borderClasses[border] : "";
+
   const { control, getValues } = useFormContext();
 
   const isIconExist = (Icon?: IconProps) => {
@@ -102,6 +116,9 @@ const FormInput = <T extends FieldValues>(
         onClick(event, { value: getValues(name), name });
       }
     };
+    const pointerClasses = onClick
+      ? " pointer-events-auto cursor-pointer "
+      : "";
     if (render) {
       // return cloneElement(
       //   render({
@@ -114,14 +131,14 @@ const FormInput = <T extends FieldValues>(
       //   }
       // );
       return render({
-        className: cn(iconCommonClasses, iconClasses),
+        className: cn(iconCommonClasses, pointerClasses, iconClasses),
         onClick: handleClick,
         ...iconMeta,
       });
     }
     if (Icon) {
       return cloneElement(Icon as any, {
-        className: cn(iconCommonClasses, iconClasses),
+        className: cn(iconCommonClasses, pointerClasses, iconClasses),
         onClick: handleClick,
         ...iconMeta,
       });
@@ -133,8 +150,12 @@ const FormInput = <T extends FieldValues>(
       defaultValue={defaultValue}
       control={control}
       name={name}
-      disabled={!!disabled}
+      // disabled={disabled}
       render={({ field }) => {
+        console.log({ field });
+        if (onChange) {
+          field.onChange = onChange;
+        }
         return (
           <FormItem className="space-y-1 ">
             {label ? (
@@ -147,20 +168,29 @@ const FormInput = <T extends FieldValues>(
                 {getIcon(leftIcon, ICON_COMMON_CLASSES("left-2"))}
                 {getIcon(rightIcon, ICON_COMMON_CLASSES("right-2"))}
                 <Input
-                  className={cn(borderClass, rest.className, {
-                    "pl-8": isIconExist(leftIcon),
-                    "pr-8": isIconExist(rightIcon),
-                  })}
+                  disabled={disabled}
+                  className={cn(
+                    border &&
+                      IInputVariants({
+                        variant: border,
+                      }),
+                    rest.className,
+                    {
+                      "pl-8": isIconExist(leftIcon),
+                      "pr-8": isIconExist(rightIcon),
+                    }
+                  )}
                   // {...rest}
                   type={type}
                   placeholder={placeholder}
                   {...field}
+                  // onChange={onChange}
                 />
               </div>
             </FormControl>
-            <FormDescription>
+            <FormDescription className="!mt-0 ml-0.5">
               <FieldHelperText helperText={helperText} name={name} />
-              <FieldError name={name} />
+              <FieldError name={name} className="text-xs" />
             </FormDescription>
           </FormItem>
         );
